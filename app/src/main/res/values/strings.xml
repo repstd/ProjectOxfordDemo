@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">ProjectOxfordDemo</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <!--AzureSubscriptionKeys-->
+    <!--All will be regarded as "Please Input Valid API Keys" if not set-->
+    <string name="speech_major_key">777662f0a2264d48a58040dc251bbeb3</string>
+    <string name="speech_minor_key">91c8a8a2b6e142769358667362ee85f5</string>
+    <string name="face_major_key">9652c1d714ac4abdaf8a1e63b55ced1b</string>
+    <string name="face_minor_key">ba7df4d7d4be44b897ec554297905fa9</string>
+    <string-array name="fragmemt_container_tabs_title">
+        <item>Speech</item>
+        <item>Face</item>>
+    </string-array>
+</resources>
