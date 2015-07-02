@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:id="@+id/fragment_speech_layout"
+    android:background="@color/background_floating_material_light"
+    android:weightSum="1">
+    <TextView
+        android:id="@+id/fragment_speech_textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RealTimeResults:"
+        />
+    <ImageButton
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/fragment_speech_textView"
+        android:background="@drawable/ic_keyboard_voice_black_48dp"
+        android:id="@+id/fragment_speech_imageView"
+        android:layout_gravity="bottom"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+</RelativeLayout>

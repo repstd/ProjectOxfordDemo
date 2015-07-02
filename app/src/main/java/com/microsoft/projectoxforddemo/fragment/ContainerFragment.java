@@ -88,10 +88,10 @@ public class ContainerFragment extends  BaseFragment
             BaseFragment frag=null;
             switch (position) {
                 case 0:
-                    frag=FaceDemoFragment.instance();
+                    frag=SpeechDemoFragment.instance();
                     break;
                 case 1:
-                    frag=SpeechDemoFragment.instance();
+                    frag=FaceDemoFragment.instance();
                     break;
                 default:
                     break;

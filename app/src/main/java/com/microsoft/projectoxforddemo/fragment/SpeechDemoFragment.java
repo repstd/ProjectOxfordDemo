@@ -44,6 +44,6 @@ public class SpeechDemoFragment extends BaseFragment
 
     @Override
     int getLayoutId() {
-        return R.layout.layout_blank;
+        return R.layout.fragment_speech_demo;
     }
 }
