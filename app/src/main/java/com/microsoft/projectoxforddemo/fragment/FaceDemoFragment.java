@@ -11,8 +11,6 @@ import android.view.ViewGroup;
 
 import com.microsoft.projectoxforddemo.R;
 
-import java.io.IOException;
-
 /**
  * Created by admin on 7/2/2015.
  */
@@ -71,6 +69,8 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment
     {
         @Override
         public void surfaceCreated(SurfaceHolder surfaceHolder) {
+            m_camera.open();
+            /*
             try {
                 m_camera.open();
                 m_camera.setPreviewDisplay(surfaceHolder);
@@ -83,18 +83,19 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment
                 m_camera.release();
                 m_camera=null;
             }
+            */
         }
 
         @Override
         public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-            m_camera.startPreview();
+            //m_camera.startPreview();
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-            m_camera.stopPreview();
-            m_camera.release();
-            m_camera=null;
+            //m_camera.stopPreview();
+            //m_camera.release();
+            //m_camera=null;
         }
     }
 
