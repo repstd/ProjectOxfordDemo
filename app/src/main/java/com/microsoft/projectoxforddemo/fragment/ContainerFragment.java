@@ -29,10 +29,11 @@ public class ContainerFragment extends BaseFragment implements Container {
     private PagerSlidingTabStrip m_tabStrip;
     private ViewPager m_viewPager;
     private ArrayList<String> m_tabTitles;
-
+    ArrayList<SubFragment> m_subFragmentList;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        m_subFragmentList=new ArrayList<SubFragment>();
     }
 
     @Override
@@ -67,19 +68,10 @@ public class ContainerFragment extends BaseFragment implements Container {
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
                 }
-
                 @Override
                 public void onPageSelected(int position) {
-                    switch (position) {
-                        case 0:
-                            setToolbarIcon(R.drawable.ic_keyboard_voice_black_24dp);
-                            break;
-                        case 1:
-                            setToolbarIcon(R.drawable.ic_perm_identity_black_24dp);
-                            break;
-                    }
+                    m_subFragmentList.get(position).onPageChanged();
                 }
-
                 @Override
                 public void onPageScrollStateChanged(int state) {
 
@@ -148,6 +140,8 @@ public class ContainerFragment extends BaseFragment implements Container {
                 default:
                     break;
             }
+            if(frag!=null)
+                m_subFragmentList.add((SubFragment)frag);
             return frag;
         }
 

@@ -38,35 +38,4 @@
         android:layout_below="@+id/fragment_container_tab"
         tools:context=".FrameLayout" />
 
-    <com.getbase.floatingactionbutton.FloatingActionsMenu
-        android:id="@+id/fragment_container_fab_menu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        fab:fab_addButtonColorNormal="@color/white"
-        fab:fab_addButtonColorPressed="@color/white_pressed"
-        fab:fab_addButtonPlusIconColor="@color/half_black"
-        fab:fab_addButtonSize="mini"
-        fab:fab_labelStyle="@style/menu_labels_style"
-        fab:fab_labelsPosition="right">
-
-        <com.getbase.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fragment_container_fab_start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            fab:fab_colorNormal="@color/white"
-            fab:fab_colorPressed="@color/white_pressed"
-            fab:fab_title="Start recording..." />
-
-        <com.getbase.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fragment_container_fab_show_results"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            fab:fab_colorNormal="@color/white"
-            fab:fab_colorPressed="@color/white_pressed"
-            fab:fab_size="mini"
-            fab:fab_title="Show Results from the server..." />
-    </com.getbase.floatingactionbutton.FloatingActionsMenu>
 </RelativeLayout>

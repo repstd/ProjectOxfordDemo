@@ -21,7 +21,7 @@ import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 /**
  * Created by admin on 7/2/2015.
  */
-public class SpeechDemoFragment extends BaseFragment implements ISpeechRecognitionServerEvents {
+public class SpeechDemoFragment extends BaseFragment implements ISpeechRecognitionServerEvents,SubFragment{
     private final String TAG = "SpeechDemoFragment";
     private FloatingActionsMenu m_fabMenu;
     private FloatingActionButton m_fabStart;
@@ -33,7 +33,6 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     private boolean m_status = false;
     private int m_waitSeconds;
     private boolean isReceivedResponse;
-
     public SpeechDemoFragment() {
 
     }
@@ -69,9 +68,9 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     @Override
     void loadComponents() {
         m_textView = (TextView) getView().findViewById(R.id.fragment_speech_textView);
-        m_fabMenu = (FloatingActionsMenu) getView().findViewById(R.id.fragment_container_fab_menu);
-        m_fabStart = (FloatingActionButton) getView().findViewById(R.id.fragment_container_fab_start);
-        m_fabStop = (FloatingActionButton) getView().findViewById(R.id.fragment_container_fab_show_results);
+        m_fabMenu = (FloatingActionsMenu) getView().findViewById(R.id.fragment_speech_fab_menu);
+        m_fabStart = (FloatingActionButton) getView().findViewById(R.id.fragment_speech_fab_start);
+        m_fabStop = (FloatingActionButton) getView().findViewById(R.id.fragment_speech_fab_show_results);
     }
 
     @Override
@@ -179,5 +178,16 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
             closeClient();
         }
         updateTextView("MicroPhone status: " + b);
+    }
+
+    @Override
+    public void onPageChanged() {
+        m_container.setToolbarIcon(R.drawable.ic_perm_identity_black_24dp);
+        if(m_status) {
+            m_micClient.endMicAndRecognition();
+            clearText();
+        }
+        if(m_fabMenu.isExpanded())
+            m_fabMenu.collapse();
     }
 }

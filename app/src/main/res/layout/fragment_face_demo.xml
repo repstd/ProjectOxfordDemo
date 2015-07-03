@@ -9,5 +9,5 @@
         android:layout_marginTop="@dimen/fifty"
         android:layout_marginLeft="@dimen/ten"
         android:layout_marginRight="@dimen/ten"
-        android:id="@+id/surfaceView" />
+        android:id="@+id/fragment_face_surfaceView" />
 </RelativeLayout>

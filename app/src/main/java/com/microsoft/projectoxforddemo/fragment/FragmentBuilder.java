@@ -1,5 +1,7 @@
 package com.microsoft.projectoxforddemo.fragment;
 
+import com.microsoft.projectoxforddemo.R;
+
 /**
  * Created by admin on 7/3/2015.
  */
@@ -28,6 +30,7 @@ public class FragmentBuilder {
     }
 
     BaseFragment createFaceFragment() {
+        m_fragmentContainer.setToolbarIcon(R.drawable.ic_keyboard_voice_black_24dp);
         FaceDemoFragment frag = new FaceDemoFragment();
         if (m_fragmentContainer != null)
             frag.setContainer(m_fragmentContainer);
