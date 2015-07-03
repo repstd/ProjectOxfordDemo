@@ -45,6 +45,6 @@ public class FaceDemoFragment extends BaseFragment {
 
     @Override
     int getLayoutId() {
-        return R.layout.layout_blank;
+        return R.layout.fragment_face_demo;
     }
 }

@@ -69,9 +69,9 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     @Override
     void loadComponents() {
         m_textView = (TextView) getView().findViewById(R.id.fragment_speech_textView);
-        m_fabMenu = (FloatingActionsMenu) getView().findViewById(R.id.fragment_speech_fab_menu);
-        m_fabStart = (FloatingActionButton) getView().findViewById(R.id.fragment_speech_fab_start);
-        m_fabStop = (FloatingActionButton) getView().findViewById(R.id.fragment_speech_fab_show_results);
+        m_fabMenu = (FloatingActionsMenu) getView().findViewById(R.id.fragment_container_fab_menu);
+        m_fabStart = (FloatingActionButton) getView().findViewById(R.id.fragment_container_fab_start);
+        m_fabStop = (FloatingActionButton) getView().findViewById(R.id.fragment_container_fab_show_results);
     }
 
     @Override
