@@ -10,14 +10,13 @@ import com.microsoft.projectoxforddemo.R;
 /**
  * Created by admin on 7/2/2015.
  */
-public class FaceDemoFragment extends BaseFragment
-{
-    private static FaceDemoFragment m_inst=null;
-    public static FaceDemoFragment instance() {
-        if(m_inst==null)
-            m_inst=new FaceDemoFragment();
-        return m_inst;
+public class FaceDemoFragment extends BaseFragment {
+    private Container m_container = null;
+
+    void setContainer(Container c) {
+        m_container = c;
     }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,7 +24,7 @@ public class FaceDemoFragment extends BaseFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(getActivity().getResources().getLayout(getLayoutId()),container,false);
+        return inflater.inflate(getActivity().getResources().getLayout(getLayoutId()), container, false);
     }
 
     @Override
@@ -38,6 +37,7 @@ public class FaceDemoFragment extends BaseFragment
     void loadComponents() {
 
     }
+
     @Override
     public String getToolbarTitle() {
         return "FaceDemo";

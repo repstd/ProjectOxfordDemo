@@ -1,4 +1,4 @@
-package microsoft.com.projectoxforddemo;
+package com.microsoft.projectoxforddemo;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
