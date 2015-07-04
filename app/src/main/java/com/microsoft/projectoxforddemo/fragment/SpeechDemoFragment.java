@@ -21,7 +21,7 @@ import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 /**
  * Created by admin on 7/2/2015.
  */
-public class SpeechDemoFragment extends BaseFragment implements ISpeechRecognitionServerEvents,SubFragment{
+public class SpeechDemoFragment extends BaseFragment implements ISpeechRecognitionServerEvents, SubFragment {
     private final String TAG = "SpeechDemoFragment";
     private FloatingActionsMenu m_fabMenu;
     private FloatingActionButton m_fabStart;
@@ -33,6 +33,7 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     private boolean m_status = false;
     private int m_waitSeconds;
     private boolean isReceivedResponse;
+
     public SpeechDemoFragment() {
 
     }
@@ -181,13 +182,14 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     }
 
     @Override
-    public void onPageChanged() {
-        m_container.setToolbarIcon(R.drawable.ic_perm_identity_black_24dp);
-        if(m_status) {
+    public void onPageShifted() {
+        m_container.setToolbarIcon(R.drawable.ic_keyboard_voice_black_24dp);
+        m_container.setToolbarTitle(getToolbarTitle());
+        if (m_status) {
             m_micClient.endMicAndRecognition();
             clearText();
         }
-        if(m_fabMenu.isExpanded())
+        if (m_fabMenu.isExpanded())
             m_fabMenu.collapse();
     }
 }

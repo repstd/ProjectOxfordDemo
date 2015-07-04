@@ -23,13 +23,6 @@ public abstract class BaseActivity extends ActionBarActivity {
         loadComponents();
     }
 
-    abstract int getLayoutID();
-
-    abstract String getToolbarTitle();
-
-    abstract String getName();
-
-    abstract void loadComponents();
 
     void loadToolbar() {
         try {
@@ -38,10 +31,17 @@ public abstract class BaseActivity extends ActionBarActivity {
                 setSupportActionBar(m_toolbar);
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             }
-            m_toolbar.setTitle(getTitle());
+            m_toolbar.setTitle(getToolbarTitle());
             m_toolbar.setTitleTextColor(getResources().getColor(R.color.background_floating_material_dark));
         } catch (NullPointerException e) {
             Log.d(TAG, e.getMessage());
         }
     }
+    abstract int getLayoutID();
+
+    abstract String getToolbarTitle();
+
+    abstract String getName();
+
+    abstract void loadComponents();
 }

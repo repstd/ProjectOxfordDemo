@@ -25,15 +25,16 @@ import java.util.Arrays;
 public class ContainerFragment extends BaseFragment implements Container {
     static BaseFragment frag;
     private final String TAG = "ContainerFragment";
+    ArrayList<SubFragment> m_subFragmentList;
     private Toolbar m_toolbar;
     private PagerSlidingTabStrip m_tabStrip;
     private ViewPager m_viewPager;
     private ArrayList<String> m_tabTitles;
-    ArrayList<SubFragment> m_subFragmentList;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        m_subFragmentList=new ArrayList<SubFragment>();
+        m_subFragmentList = new ArrayList<SubFragment>();
     }
 
     @Override
@@ -53,7 +54,6 @@ public class ContainerFragment extends BaseFragment implements Container {
         m_toolbar = (Toolbar) getView().findViewById(R.id.activity_main_toolbar);
         m_toolbar.setTitle(getToolbarTitle());
         m_toolbar.setNavigationIcon(R.drawable.abc_ic_voice_search_api_mtrl_alpha);
-        //m_toolbar.setTitleTextColor(getActivity().getResources().getColor(R.color.colorPrimary));
         m_toolbar.setTitleTextColor(Color.WHITE);
         m_tabStrip = (PagerSlidingTabStrip) getView().findViewById(R.id.fragment_container_tab);
         m_tabStrip.setShouldExpand(true);
@@ -66,11 +66,10 @@ public class ContainerFragment extends BaseFragment implements Container {
             m_tabStrip.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
                 }
                 @Override
                 public void onPageSelected(int position) {
-                    m_subFragmentList.get(position).onPageChanged();
+                    m_subFragmentList.get(position).onPageShifted();
                 }
                 @Override
                 public void onPageScrollStateChanged(int state) {
@@ -140,8 +139,8 @@ public class ContainerFragment extends BaseFragment implements Container {
                 default:
                     break;
             }
-            if(frag!=null)
-                m_subFragmentList.add((SubFragment)frag);
+            if (frag != null)
+                m_subFragmentList.add((SubFragment) frag);
             return frag;
         }
 
