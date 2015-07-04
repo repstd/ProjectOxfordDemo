@@ -38,7 +38,7 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
 
     }
 
-    void setContainer(Container c) {
+    public void setContainer(Container c) {
         m_container = c;
     }
 

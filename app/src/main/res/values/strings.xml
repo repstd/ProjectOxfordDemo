@@ -11,7 +11,7 @@
     <string name="face_primary_key">9652c1d714ac4abdaf8a1e63b55ced1b</string>
     <string name="face_minor_key">ba7df4d7d4be44b897ec554297905fa9</string>
     <string-array name="fragmemt_container_tabs_title">
-        <item>Speech</item>
         <item>Face</item>>
+        <item>Speech</item>
     </string-array>
 </resources>

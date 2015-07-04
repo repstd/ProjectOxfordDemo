@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.microsoft.projectoxforddemo.R;
+import com.microsoft.projectoxforddemo.utils.FragmentBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -131,10 +132,10 @@ public class ContainerFragment extends BaseFragment implements Container {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-                    frag = FragmentBuilder.instance().context(ContainerFragment.this).createSpeechFragment();
+                    frag = FragmentBuilder.instance().context(ContainerFragment.this).createFaceFragment();
                     break;
                 case 1:
-                    frag = FragmentBuilder.instance().context(ContainerFragment.this).createFaceFragment();
+                    frag = FragmentBuilder.instance().context(ContainerFragment.this).createSpeechFragment();
                     break;
                 default:
                     break;
