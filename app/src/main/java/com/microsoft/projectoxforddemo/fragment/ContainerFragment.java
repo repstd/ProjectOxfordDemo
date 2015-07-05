@@ -68,10 +68,12 @@ public class ContainerFragment extends BaseFragment implements Container {
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 }
+
                 @Override
                 public void onPageSelected(int position) {
                     m_subFragmentList.get(position).onPageShifted();
                 }
+
                 @Override
                 public void onPageScrollStateChanged(int state) {
 

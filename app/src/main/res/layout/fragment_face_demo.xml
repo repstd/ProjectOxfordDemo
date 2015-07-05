@@ -3,8 +3,7 @@
     xmlns:fab="http://schemas.android.com/apk/res-auto"
     android:id="@+id/fragment_face_demo_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent">
 
     <SurfaceView
         android:id="@+id/fragment_face_surfaceView"
@@ -47,12 +46,21 @@
             fab:fab_title="Capture" />
 
         <com.getbase.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fragment_face_fab_detection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            fab:fab_colorNormal="@color/white"
+            fab:fab_colorPressed="@color/white_pressed"
+            fab:fab_size="mini"
+            fab:fab_title="Detection" />
+
+        <com.getbase.floatingactionbutton.FloatingActionButton
             android:id="@+id/fragment_face_fab_identification"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             fab:fab_colorNormal="@color/white"
             fab:fab_colorPressed="@color/white_pressed"
             fab:fab_size="mini"
-            fab:fab_title="Identification" />
+            fab:fab_title="identification" />
     </com.getbase.floatingactionbutton.FloatingActionsMenu>
 </RelativeLayout>

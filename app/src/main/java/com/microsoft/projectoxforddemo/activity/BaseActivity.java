@@ -37,6 +37,7 @@ public abstract class BaseActivity extends ActionBarActivity {
             Log.d(TAG, e.getMessage());
         }
     }
+
     abstract int getLayoutID();
 
     abstract String getToolbarTitle();

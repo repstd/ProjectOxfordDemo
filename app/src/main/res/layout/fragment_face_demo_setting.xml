@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/background_floating_material_light">
+
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/fragment_face_demo_setting_radio_button_front_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Using FrontCamera"
+            android:textColor="@color/background_floating_material_dark" />
+
+        <RadioButton
+            android:id="@+id/fragment_face_demo_setting_radio_button_back_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/fragment_face_demo_setting_radio_button_front_camera"
+            android:text="Using BackCamera"
+            android:textColor="@color/background_floating_material_dark" />
+    </RadioGroup>
+
+</RelativeLayout>
