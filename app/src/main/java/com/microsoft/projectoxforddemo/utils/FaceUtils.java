@@ -14,33 +14,33 @@ public class FaceUtils {
     private final static String TAG = "FaceUtils";
     public static FaceDetectionObserver FACES = new FaceDetectionObserver(null, null);
 
-    public static Face[] detectFace(ByteArrayInputStream image, Handler handler) {
+    private static Face[] detectFaceInThreading(ByteArrayInputStream image, Handler handler) {
         FaceDetectionThread task = new FaceDetectionThread(image);
-        FACES = new FaceDetectionObserver(task, handler);
-        task.attach(FACES);
-        task.start();
-        Log.d(TAG, "AsyncThreadExecuted.");
-        return task.getResult();
-    }
-    public static Face[] detectFaceInThreading(ByteArrayInputStream image, Handler handler) {
-        FaceDetectionThread task= new FaceDetectionThread(image);
         FACES = new FaceDetectionObserver(task, handler);
         task.attach(FACES);
         task.start();
         Log.d(TAG, "AsyncTaskExecuted.");
         return task.getResult();
     }
-    public static Face[] detectFace(ByteArrayInputStream image, FaceServiceClient cli, Handler handler) {
-        FaceDetectionThread task = new FaceDetectionThread(image,cli);
+
+    private static Face[] detectFaceInThreading(ByteArrayInputStream image, FaceServiceClient cli, Handler handler) {
+        FaceDetectionThread task = new FaceDetectionThread(image, cli);
         FACES = new FaceDetectionObserver(task, handler);
         task.attach(FACES);
         task.start();
         return task.getResult();
     }
+
     public static Face[] detectFace(byte[] data, Handler handler) {
         Log.d(TAG, "detectFace");
         ByteArrayInputStream inputStream = ImageUtils.getByteArrayInputStream(data);
         return detectFaceInThreading(inputStream, handler);
+    }
+
+    public static Face[] detectFace(byte[] data, FaceServiceClient cli, Handler handler) {
+        Log.d(TAG, "detectFace");
+        ByteArrayInputStream inputStream = ImageUtils.getByteArrayInputStream(data);
+        return detectFaceInThreading(inputStream, cli, handler);
     }
 
     /**
@@ -55,6 +55,7 @@ public class FaceUtils {
             m_subject = task;
             m_handler = handler;
         }
+
         @Override
         public void update(Subject sub) {
             if (sub == m_subject) {

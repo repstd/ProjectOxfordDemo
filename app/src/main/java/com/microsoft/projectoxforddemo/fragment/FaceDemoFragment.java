@@ -2,6 +2,7 @@ package com.microsoft.projectoxforddemo.fragment;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -17,17 +18,22 @@ import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.contract.Face;
 import com.microsoft.projectoxforddemo.R;
 import com.microsoft.projectoxforddemo.utils.FaceUtils;
 import com.microsoft.projectoxforddemo.utils.ImageUtils;
+import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by admin on 7/2/2015.
@@ -52,6 +58,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private Rect m_cameraPreviewBound;
     private AlertDialog m_settingAlertDialog;
     private View m_settingAlertDialogView;
+    private FaceServiceClient m_faceCli = null;
     //Index for the cameras in the devices.0 for back-camera and 1 for front-camera;
     private int m_camera_index = ImageUtils.CAMERA_FRONT;
     private boolean m_cameraStatus = false;
@@ -106,7 +113,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         m_settingAlertDialogView = (View) FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_setting, null);
         builder.setView(m_settingAlertDialogView);
         m_settingAlertDialog = builder.create();
-
+        m_settingAlertDialog.setTitle("Choose Camera Device");
         addListeners();
     }
 
@@ -176,6 +183,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
                 builder.setMessage("Requesting the server...");
                 final AlertDialog waiting = builder.create();
+                waiting.setCancelable(false);
                 m_camera.takePicture(null, null, new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, Camera camera) {
@@ -191,14 +199,15 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                                 } else
                                     Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceNotFound", Toast.LENGTH_LONG).show();
                                 waiting.cancel();
-                                super.handleMessage(msg);
+
+                                super.
+
+                                        handleMessage(msg);
                             }
                         });
                     }
                 });
                 waiting.show();
-                startPreview();
-                m_cameraStatus = true;
             }
         });
     }
@@ -297,19 +306,96 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         initCamera();
         startPreview();
     }
+
     void onFaceDetected() {
         m_faceView.draw(FACE_VIEW_FACE);
-        promptForName();
+        promptForChoice();
     }
-    void promptForName() {
+
+    void promptForChoice() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        builder.setTitle("Ready for saving your face?");
+
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                promptForInfo();
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.setCancelable(true);
+        builder.show();
+    }
+
+    void promptForInfo() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        final View promptLayout = FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_input_id, null);
+        builder.setView(promptLayout);
+        builder.setTitle("Input Person Info");
+        final AlertDialog dialog = builder.create();
+        builder.setPositiveButton("Ready", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    String personId = ((EditText) (promptLayout.findViewById(R.id.fragment_face_demo_input_person_id))).getText().toString();
+                    String groupId = ((EditText) (promptLayout.findViewById(R.id.fragment_face_demo_input_group_id))).getText().toString();
+                    Log.d(TAG, "input: " + personId + " " + groupId);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.show();
+    }
+
+    void addFacesToPerson(String person, String group) {
 
     }
-    void addFacesToPerson(String person,String group) {
+
+    void Identify(String person, String group) {
 
     }
-    void Identify(String person,String group) {
 
+    class AddFaceToPerson extends AsyncTask<String, String, Boolean> {
+        public FaceServiceClient m_serviceClient = null;
+        public String m_personId;
+        public String m_personGroupId;
+
+        AddFaceToPerson() {
+            m_serviceClient = new FaceServiceClient(OxfordRecognitionManager.instance().getFaceKey().getPrimary());
+        }
+
+        protected Boolean doInBackground(String... params) {
+            try {
+                for (Face face : FaceUtils.FACES.getResult()) {
+                    //personId //groupId //faceId
+                    UUID personId = UUID.fromString(params[0]);
+                    m_serviceClient.addPersonFace(params[1], personId, face.faceId, "ProjectOxfordTest");
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "Error in Adding Faces");
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected void onProgressUpdate(String... progress) {
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+        }
     }
+
     class CameraViewCallback implements SurfaceHolder.Callback {
 
         @Override
@@ -325,14 +411,9 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
 
         }
+
     }
-    class AddPerson extends AsyncTask<Void,String,Boolean>
-    {
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            return null;
-        }
-    }
+
     class FaceVisualizationView extends View {
         int m_src = FACE_VIEW_CONTOUR;
 

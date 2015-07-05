@@ -20,19 +20,19 @@ public class FaceDetectionThread extends Thread implements Subject {
     private FaceServiceClient m_client = null;
     private Face[] m_result;
     private InputStream m_para;
-    FaceDetectionThread(InputStream para)
-    {
+
+    FaceDetectionThread(InputStream para) {
         m_observers = new ArrayList<Observer>();
         m_client = new FaceServiceClient(OxfordRecognitionManager.instance().getFaceKey().getPrimary());
         if (m_client == null) {
             Log.d(TAG, "Error in connecting to the server and create FaceRecognition client.");
         } else
             Log.d(TAG, "faceServiceClient connected.");
-        m_para=para;
+        m_para = para;
     }
 
     FaceDetectionThread(InputStream para, FaceServiceClient client) {
-        m_para=para;
+        m_para = para;
         m_client = client;
     }
 
@@ -44,11 +44,11 @@ public class FaceDetectionThread extends Thread implements Subject {
         return m_result;
     }
 
-    public void run()  {
+    public void run() {
         doInBackground(m_para);
     }
-    protected Face[] doInBackground(InputStream params)
-    {
+
+    protected Face[] doInBackground(InputStream params) {
         try {
             m_result = m_client.detect(params, true, true, true, true);
             Log.d(TAG, "FaceServiceReturned");
@@ -70,6 +70,7 @@ public class FaceDetectionThread extends Thread implements Subject {
             return null;
         }
     }
+
     @Override
     public void alert() {
         for (Observer ob : m_observers)
