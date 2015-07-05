@@ -302,7 +302,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         promptForName();
     }
     void promptForName() {
-        //Here we might use SpeechAPI in the future;
 
     }
     void addFacesToPerson(String person,String group) {
