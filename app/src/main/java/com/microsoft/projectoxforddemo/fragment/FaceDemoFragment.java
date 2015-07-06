@@ -1,6 +1,7 @@
 package com.microsoft.projectoxforddemo.fragment;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Canvas;
@@ -25,7 +26,11 @@ import android.widget.Toast;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.contract.CreatePersonResult;
 import com.microsoft.projectoxford.face.contract.Face;
+import com.microsoft.projectoxford.face.contract.Person;
+import com.microsoft.projectoxford.face.contract.PersonGroup;
+import com.microsoft.projectoxford.face.rest.ClientException;
 import com.microsoft.projectoxforddemo.R;
 import com.microsoft.projectoxforddemo.utils.FaceUtils;
 import com.microsoft.projectoxforddemo.utils.ImageUtils;
@@ -59,6 +64,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private AlertDialog m_settingAlertDialog;
     private View m_settingAlertDialogView;
     private FaceServiceClient m_faceCli = null;
+    ProgressDialog m_progressDialog;
     //Index for the cameras in the devices.0 for back-camera and 1 for front-camera;
     private int m_camera_index = ImageUtils.CAMERA_FRONT;
     private boolean m_cameraStatus = false;
@@ -71,6 +77,8 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         m_callback = new CameraViewCallback();
+        m_progressDialog=new ProgressDialog(getActivity().getApplicationContext());
+        m_progressDialog.setTitle("FaceDemo");
     }
 
     @Override
@@ -310,6 +318,11 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     void onFaceDetected() {
         m_faceView.draw(FACE_VIEW_FACE);
         promptForChoice();
+        //Just For test
+        String personId="Yuli";
+        String groupId="Test";
+        new AddFaceToPerson().execute(personId,groupId);
+        Log.d(TAG, "input: " + personId + " " + groupId);
     }
 
     void promptForChoice() {
@@ -344,7 +357,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 try {
                     String personId = ((EditText) (promptLayout.findViewById(R.id.fragment_face_demo_input_person_id))).getText().toString();
                     String groupId = ((EditText) (promptLayout.findViewById(R.id.fragment_face_demo_input_group_id))).getText().toString();
-                    Log.d(TAG, "input: " + personId + " " + groupId);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -371,31 +383,63 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         }
 
         protected Boolean doInBackground(String... params) {
-            try {
+            try
+            {
+                //String personName=params[0];
+                //UUID personIds = UUID.fromString(personName);
+                //String groupId=params[1];
+
+                String personName="person";
+                //UUID personId = UUID.fromString(personName);
+                UUID personId;
+                String groupId="Test";
+                //Toast.makeText(FaceDemoFragment.this.getActivity(),"trying to add Face to:"+personName+"@"+groupId,Toast.LENGTH_LONG).show();
+                //in test, group is "Test".
+                //check the server whether the groop
+                //Person checkPerson=m_serviceClient.getPerson(groupId,personId);
+                //PersonGroup group=m_serviceClient.getPersonGroup(groupId);
+                PersonGroup group=null;
+
+                if(group==null) {
+                    m_serviceClient.createPersonGroup(groupId,"Name","User Data");
+                    //create new Person if not exists
+                    log("Specified person not found.Trying to add:" + personName + "@" + groupId);
+                    //CreatePersonResult createResult=m_serviceClient.createPerson(groupId, FaceUtils.FACES.getFacesIds(), personName, "Test");
+                    //personId=createResult.personId;
+                    //log("person " + personId + " created.");
+                }
                 for (Face face : FaceUtils.FACES.getResult()) {
                     //personId //groupId //faceId
-                    UUID personId = UUID.fromString(params[0]);
-                    m_serviceClient.addPersonFace(params[1], personId, face.faceId, "ProjectOxfordTest");
+                    //m_serviceClient.addPersonFace(groupId,personId, face.faceId, "ProjectOxfordTest");
+                    log("face " + face.faceId + " created.");
                 }
-            } catch (Exception e) {
-                Log.d(TAG, "Error in Adding Faces");
+            } catch (ClientException e) {
+                log("Error in Adding Faces"+e.getMessage());
             }
             return null;
         }
 
         @Override
         protected void onPreExecute() {
+            //m_progressDialog.show();
         }
 
         @Override
-        protected void onProgressUpdate(String... progress) {
+        protected void onProgressUpdate(String... progress){
+            Log.d(TAG, "pnProgressUpdate for AddFaceTask:" + progress[0]);
+            //m_progressDialog.setMessage(progress[0]);
         }
 
         @Override
         protected void onPostExecute(Boolean result) {
+            //m_progressDialog.dismiss();
+            Log.d(TAG, "onPostExecute response for AddFaceTask:" + result);
+        }
+        void log(String progress) {
+            //publishProgress(progress);
+            Log.d(TAG,"progress: "+progress);
         }
     }
-
     class CameraViewCallback implements SurfaceHolder.Callback {
 
         @Override

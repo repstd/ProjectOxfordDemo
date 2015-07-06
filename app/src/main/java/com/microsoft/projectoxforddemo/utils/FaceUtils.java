@@ -9,6 +9,9 @@ import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.Face;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class FaceUtils {
     private final static String TAG = "FaceUtils";
@@ -78,6 +81,16 @@ public class FaceUtils {
 
         public Face[] getResult() {
             return m_result;
+        }
+        public UUID[] getFacesIds()
+        {
+            if(m_result==null)
+                return null;
+            List<UUID> faceId=new ArrayList<UUID>();
+            for(Face face:m_result) {
+                faceId.add(face.faceId);;
+            }
+            return faceId.toArray(new UUID[faceId.size()]);
         }
     }
 }
