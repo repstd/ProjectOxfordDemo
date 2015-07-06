@@ -52,7 +52,6 @@ public class FaceDetectionThread extends Thread implements Subject {
         try {
             m_result = m_client.detect(params, true, true, true, true);
             Log.d(TAG, "FaceServiceReturned");
-
             alert();
             for (Observer ob : m_observers)
                 detach(ob);

@@ -29,9 +29,9 @@ public class ImageUtils {
     public static final int CAMERA_BACK = 0;
     public static final int CAMERA_FRONT = 1;
     private static final int IMAGE_MAX_SIDE_LENGTH = 1280;
+    private static Bitmap m_lastCapture=null;
     //by default,we use the front camera;
     public static Config m_config = new Config();
-
     public static Config getConfig() {
         return m_config;
     }
@@ -82,7 +82,7 @@ public class ImageUtils {
     }
 
     public static void drawFaces(Canvas canvas, Face[] faces, int marginLeft, int marginTop) {
-        Bitmap original = loadImage("capture");
+        Bitmap original = m_lastCapture;
         if (original == null)
             return;
         Bitmap marked = drawFaces(original, faces, true, canvas);
@@ -181,24 +181,24 @@ public class ImageUtils {
     //get bmp from the buffer captured by invoking Camera.TakePicture(...PictureCallback).
     public static Bitmap getBitmap(byte[] data) {
         Bitmap original = BitmapFactory.decodeByteArray(data, 0, data.length);
-        Bitmap capture = null;
         if (getConfig().getCamera() == CAMERA_BACK)
-            capture = resize(ImageUtils.rotateBitmap(original, 90));
+            m_lastCapture= resize(ImageUtils.rotateBitmap(original, 90));
         else
-            capture = resize(ImageUtils.rotateBitmap(original, -90));
-        save(capture, getConfig().getTempBmpName());
-        return capture;
+            m_lastCapture= resize(ImageUtils.rotateBitmap(original, -90));
+        return m_lastCapture;
     }
 
     public static ByteArrayInputStream getByteArrayInputStream(byte[] data) {
         //Camera.Parameters ps = camera.getParameters();
         Bitmap bmp = getBitmap(data);
+        return getByteArrayInputStream(bmp);
+    }
+    public  static ByteArrayInputStream getByteArrayInputStream(Bitmap bmp) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         ByteArrayInputStream input = new ByteArrayInputStream(outputStream.toByteArray());
         return input;
     }
-
     public static Bitmap rotateBitmap(Bitmap bitmap, int angle) {
         // If the rotate angle is 0, then return the original image, else return the rotated image
         if (angle != 0) {
@@ -209,7 +209,9 @@ public class ImageUtils {
             return bitmap;
         }
     }
-
+    public static void saveLastCapture(String name) {
+            save(m_lastCapture,name);
+    }
     public static void save(Bitmap bmp, String name) {
         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + getConfig().getDataDiraName();
         File dir = new File(path);
@@ -262,7 +264,6 @@ public class ImageUtils {
     public static void setCamera(int cam) {
         getConfig().setCamera(cam);
     }
-
     static class Config {
         int m_cameraIndex;
         String m_dataDir;

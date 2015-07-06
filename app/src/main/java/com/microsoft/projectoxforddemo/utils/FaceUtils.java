@@ -1,5 +1,6 @@
 package com.microsoft.projectoxforddemo.utils;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -15,8 +16,8 @@ import java.util.UUID;
 
 public class FaceUtils {
     private final static String TAG = "FaceUtils";
-    public static FaceDetectionObserver FACES = new FaceDetectionObserver(null, null);
-
+    //public static FaceDetectionObserver FACES = new FaceDetectionObserver(null, null);
+    public static FaceDetectionObserver FACES=null;
     private static Face[] detectFaceInThreading(ByteArrayInputStream image, Handler handler) {
         FaceDetectionThread task = new FaceDetectionThread(image);
         FACES = new FaceDetectionObserver(task, handler);
@@ -34,6 +35,13 @@ public class FaceUtils {
         return task.getResult();
     }
 
+
+    public static Face[] detectFace(Bitmap bmp, Handler handler) {
+        Log.d(TAG, "detectFace");
+        ByteArrayInputStream inputStream = ImageUtils.getByteArrayInputStream(bmp);
+        return detectFaceInThreading(inputStream, handler);
+    }
+
     public static Face[] detectFace(byte[] data, Handler handler) {
         Log.d(TAG, "detectFace");
         ByteArrayInputStream inputStream = ImageUtils.getByteArrayInputStream(data);
@@ -45,7 +53,6 @@ public class FaceUtils {
         ByteArrayInputStream inputStream = ImageUtils.getByteArrayInputStream(data);
         return detectFaceInThreading(inputStream, cli, handler);
     }
-
     /**
      * Created by yulw on 7/5/2015.
      */
@@ -76,7 +83,6 @@ public class FaceUtils {
                 msg.setData(bundle);
                 m_handler.sendMessage(msg);
             }
-
         }
 
         public Face[] getResult() {

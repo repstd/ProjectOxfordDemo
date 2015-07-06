@@ -4,11 +4,11 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.Camera;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -26,15 +26,11 @@ import android.widget.Toast;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.microsoft.projectoxford.face.FaceServiceClient;
-import com.microsoft.projectoxford.face.contract.CreatePersonResult;
-import com.microsoft.projectoxford.face.contract.Face;
-import com.microsoft.projectoxford.face.contract.Person;
-import com.microsoft.projectoxford.face.contract.PersonGroup;
-import com.microsoft.projectoxford.face.rest.ClientException;
 import com.microsoft.projectoxforddemo.R;
 import com.microsoft.projectoxforddemo.utils.FaceUtils;
+import com.microsoft.projectoxforddemo.utils.FaceVerifyingThread;
 import com.microsoft.projectoxforddemo.utils.ImageUtils;
-import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
+import com.microsoft.projectoxforddemo.utils.PersonUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -57,7 +53,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private FloatingActionsMenu m_fabMenu = null;
     private FloatingActionButton m_fabSetting = null;
     private FloatingActionButton m_fabCapture = null;
-    private FloatingActionButton m_fabIdentification = null;
+    private FloatingActionButton m_fabReset = null;
     private FloatingActionButton m_fabDetection = null;
     private FaceVisualizationView m_faceView;
     private Rect m_cameraPreviewBound;
@@ -108,7 +104,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         m_fabMenu.setHorizontalScrollBarEnabled(true);
         m_fabSetting = (FloatingActionButton) getView().findViewById(R.id.fragment_face_fab_setting);
         m_fabCapture = (FloatingActionButton) getView().findViewById(R.id.fragment_face_capture);
-        m_fabIdentification = (FloatingActionButton) getView().findViewById(R.id.fragment_face_fab_identification);
+        m_fabReset = (FloatingActionButton) getView().findViewById(R.id.fragment_face_fab_reset);
         m_fabDetection = (FloatingActionButton) getView().findViewById(R.id.fragment_face_fab_detection);
 
         //make sure the floating action button is in front of other views
@@ -187,14 +183,13 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                     m_settingAlertDialog.show();
                     return;
                 }
+
                 Toast.makeText(getActivity().getApplicationContext(), "ReadyForFacesDetectionUsingMicrosoftAI", Toast.LENGTH_LONG).show();
-                AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
-                builder.setMessage("Requesting the server...");
-                final AlertDialog waiting = builder.create();
-                waiting.setCancelable(false);
+                final AlertDialog waiting = newAlertDialog("requesting the server...");
                 m_camera.takePicture(null, null, new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, Camera camera) {
+
                         FaceUtils.detectFace(data, new Handler() {
                             @Override
                             public void handleMessage(Message msg) {
@@ -218,8 +213,22 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 waiting.show();
             }
         });
+        m_fabReset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PersonUtils.removeData();
+                m_fabMenu.collapse();
+            }
+        });
     }
-
+    public AlertDialog newAlertDialog(String title)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        builder.setMessage(title);
+        AlertDialog dialog= builder.create();
+        dialog.setCancelable(false);
+        return dialog;
+    }
     @Override
     public String getToolbarTitle() {
         return "FaceDemo";
@@ -307,7 +316,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         m_camera.release();
         m_camera = null;
     }
-
     void restartCamera() {
         stopPreview();
         closeCamera();
@@ -317,12 +325,11 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
 
     void onFaceDetected() {
         m_faceView.draw(FACE_VIEW_FACE);
-        promptForChoice();
+        if(PersonUtils.isNewPerson())
+            promptForChoice();
+        else
+            verify();
         //Just For test
-        String personId="Yuli";
-        String groupId="Test";
-        new AddFaceToPerson().execute(personId,groupId);
-        Log.d(TAG, "input: " + personId + " " + groupId);
     }
 
     void promptForChoice() {
@@ -357,6 +364,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 try {
                     String personId = ((EditText) (promptLayout.findViewById(R.id.fragment_face_demo_input_person_id))).getText().toString();
                     String groupId = ((EditText) (promptLayout.findViewById(R.id.fragment_face_demo_input_group_id))).getText().toString();
+                    PersonUtils.newUser(personId, groupId);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -365,80 +373,43 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         builder.show();
     }
 
-    void addFacesToPerson(String person, String group) {
-
-    }
-
-    void Identify(String person, String group) {
-
-    }
-
-    class AddFaceToPerson extends AsyncTask<String, String, Boolean> {
-        public FaceServiceClient m_serviceClient = null;
-        public String m_personId;
-        public String m_personGroupId;
-
-        AddFaceToPerson() {
-            m_serviceClient = new FaceServiceClient(OxfordRecognitionManager.instance().getFaceKey().getPrimary());
-        }
-
-        protected Boolean doInBackground(String... params) {
-            try
-            {
-                //String personName=params[0];
-                //UUID personIds = UUID.fromString(personName);
-                //String groupId=params[1];
-
-                String personName="person";
-                //UUID personId = UUID.fromString(personName);
-                UUID personId;
-                String groupId="Test";
-                //Toast.makeText(FaceDemoFragment.this.getActivity(),"trying to add Face to:"+personName+"@"+groupId,Toast.LENGTH_LONG).show();
-                //in test, group is "Test".
-                //check the server whether the groop
-                //Person checkPerson=m_serviceClient.getPerson(groupId,personId);
-                //PersonGroup group=m_serviceClient.getPersonGroup(groupId);
-                PersonGroup group=null;
-
-                if(group==null) {
-                    m_serviceClient.createPersonGroup(groupId,"Name","User Data");
-                    //create new Person if not exists
-                    log("Specified person not found.Trying to add:" + personName + "@" + groupId);
-                    //CreatePersonResult createResult=m_serviceClient.createPerson(groupId, FaceUtils.FACES.getFacesIds(), personName, "Test");
-                    //personId=createResult.personId;
-                    //log("person " + personId + " created.");
+    AlertDialog waiting;
+    void verify()
+    {
+        //save the current faces
+        final UUID[] currentCapturedFaceId=FaceUtils.FACES.getFacesIds();
+        Bitmap masterMap=PersonUtils.getMasterBitMap();
+        waiting=newAlertDialog("verifying...");
+        waiting.show();
+        FaceUtils.detectFace(masterMap, new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                int result = msg.getData().getInt("faces");
+                if (result == 1) {
+                    UUID[] oldCapture=FaceUtils.FACES.getFacesIds();
+                    waiting.setMessage("comparing...");
+                    compare(currentCapturedFaceId[0],oldCapture[0]);
                 }
-                for (Face face : FaceUtils.FACES.getResult()) {
-                    //personId //groupId //faceId
-                    //m_serviceClient.addPersonFace(groupId,personId, face.faceId, "ProjectOxfordTest");
-                    log("face " + face.faceId + " created.");
-                }
-            } catch (ClientException e) {
-                log("Error in Adding Faces"+e.getMessage());
             }
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            //m_progressDialog.show();
-        }
-
-        @Override
-        protected void onProgressUpdate(String... progress){
-            Log.d(TAG, "pnProgressUpdate for AddFaceTask:" + progress[0]);
-            //m_progressDialog.setMessage(progress[0]);
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            //m_progressDialog.dismiss();
-            Log.d(TAG, "onPostExecute response for AddFaceTask:" + result);
-        }
-        void log(String progress) {
-            //publishProgress(progress);
-            Log.d(TAG,"progress: "+progress);
-        }
+        });
+    }
+    void compare(UUID face1,UUID face2)
+    {
+        new FaceVerifyingThread(face1,face2,new Handler()
+        {
+            @Override
+            public void handleMessage(Message msg)
+            {
+                boolean isIdentical=msg.getData().getBoolean("isIdentical");
+                double confidence=msg.getData().getDouble("confidence");
+                waiting.setCancelable(true);
+                if(isIdentical)
+                    waiting.setMessage("Authorized."+"Confidence: "+Double.toString(confidence));
+                else
+                    waiting.setMessage("UnAuthorized."+"Confidence: "+Double.toString(confidence));
+            }
+        }).start();
     }
     class CameraViewCallback implements SurfaceHolder.Callback {
 
@@ -457,14 +428,12 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         }
 
     }
-
     class FaceVisualizationView extends View {
         int m_src = FACE_VIEW_CONTOUR;
 
         public FaceVisualizationView(Context context) {
             super(context);
         }
-
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
