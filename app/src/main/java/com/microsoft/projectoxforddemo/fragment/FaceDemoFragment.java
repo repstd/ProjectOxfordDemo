@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ImageFormat;
@@ -14,8 +15,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +25,8 @@ import android.widget.Toast;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.contract.FaceAttribute;
+import com.microsoft.projectoxford.face.contract.GenderEnum;
 import com.microsoft.projectoxforddemo.R;
 import com.microsoft.projectoxforddemo.utils.FaceUtils;
 import com.microsoft.projectoxforddemo.utils.FaceVerifyingThread;
@@ -46,9 +47,10 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     public static final int FACE_VIEW_HOME_IMAGE = 2;
     public static final int FACE_VIEW_CONTOUR = 4;
     private final String TAG = "FaceDemoFragment";
+    ProgressDialog m_progressDialog;
+    AlertDialog waiting;
     private Container m_container = null;
     private SurfaceView m_surf = null;
-    private Callback m_callback = null;
     private Camera m_camera = null;
     private FloatingActionsMenu m_fabMenu = null;
     private FloatingActionButton m_fabSetting = null;
@@ -60,7 +62,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private AlertDialog m_settingAlertDialog;
     private View m_settingAlertDialogView;
     private FaceServiceClient m_faceCli = null;
-    ProgressDialog m_progressDialog;
     //Index for the cameras in the devices.0 for back-camera and 1 for front-camera;
     private int m_camera_index = ImageUtils.CAMERA_FRONT;
     private boolean m_cameraStatus = false;
@@ -72,8 +73,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        m_callback = new CameraViewCallback();
-        m_progressDialog=new ProgressDialog(getActivity().getApplicationContext());
+        m_progressDialog = new ProgressDialog(getActivity().getApplicationContext());
         m_progressDialog.setTitle("FaceDemo");
     }
 
@@ -86,7 +86,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         loadComponents();
-        m_surf.getHolder().addCallback(m_callback);
         m_faceView.draw(FACE_VIEW_HOME_IMAGE);
         /*
         initCamera();
@@ -202,10 +201,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                                 } else
                                     Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceNotFound", Toast.LENGTH_LONG).show();
                                 waiting.cancel();
-
-                                super.
-
-                                        handleMessage(msg);
                             }
                         });
                     }
@@ -221,14 +216,15 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             }
         });
     }
-    public AlertDialog newAlertDialog(String title)
-    {
+
+    public AlertDialog newAlertDialog(String title) {
         AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
         builder.setMessage(title);
-        AlertDialog dialog= builder.create();
+        AlertDialog dialog = builder.create();
         dialog.setCancelable(false);
         return dialog;
     }
+
     @Override
     public String getToolbarTitle() {
         return "FaceDemo";
@@ -316,6 +312,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         m_camera.release();
         m_camera = null;
     }
+
     void restartCamera() {
         stopPreview();
         closeCamera();
@@ -325,11 +322,52 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
 
     void onFaceDetected() {
         m_faceView.draw(FACE_VIEW_FACE);
-        if(PersonUtils.isNewPerson())
-            promptForChoice();
-        else
-            verify();
+        SharedPreferences setting = getActivity().getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
+        if (setting.getBoolean("ShowingFaceAttr", false))
+            showFaceAttr();
+        else {
+            if (PersonUtils.isNewPerson())
+                promptForChoice();
+            else
+                verify();
+        }
         //Just For test
+    }
+
+    void showFaceAttr() {
+        FaceAttribute attr = FaceUtils.FACES.getResult()[0].attributes;
+        if (attr == null)
+            return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        final View layout = FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_show_face_attributes, null);
+        builder.setView(layout);
+        builder.setTitle("FaceAttributes");
+        //show age
+        EditText ageEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_age);
+        ageEditText.setText(Double.toString(attr.age));
+        //show Gender;
+        EditText genderEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_gender);
+        if (attr.gender.equals(GenderEnum.male))
+            genderEditText.setText("Male");
+        else if (attr.gender.equals(GenderEnum.female))
+            genderEditText.setText("Female");
+        else
+            genderEditText.setText("Unknown");
+        final AlertDialog dialog = builder.create();
+        builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    if (PersonUtils.isNewPerson())
+                        promptForChoice();
+                    else
+                        verify();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.show();
     }
 
     void promptForChoice() {
@@ -345,7 +383,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
             }
         });
         builder.setCancelable(true);
@@ -371,15 +408,14 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             }
         });
         builder.show();
+        m_faceView.draw(FACE_VIEW_HOME_IMAGE);
     }
 
-    AlertDialog waiting;
-    void verify()
-    {
+    void verify() {
         //save the current faces
-        final UUID[] currentCapturedFaceId=FaceUtils.FACES.getFacesIds();
-        Bitmap masterMap=PersonUtils.getMasterBitMap();
-        waiting=newAlertDialog("verifying...");
+        final UUID[] currentCapturedFaceId = FaceUtils.FACES.getFacesIds();
+        Bitmap masterMap = PersonUtils.getMasterBitMap();
+        waiting = newAlertDialog("verifying...");
         waiting.show();
         FaceUtils.detectFace(masterMap, new Handler() {
             @Override
@@ -387,53 +423,36 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 super.handleMessage(msg);
                 int result = msg.getData().getInt("faces");
                 if (result == 1) {
-                    UUID[] oldCapture=FaceUtils.FACES.getFacesIds();
+                    UUID[] oldCapture = FaceUtils.FACES.getFacesIds();
                     waiting.setMessage("comparing...");
-                    compare(currentCapturedFaceId[0],oldCapture[0]);
+                    compare(currentCapturedFaceId[0], oldCapture[0]);
                 }
             }
         });
     }
-    void compare(UUID face1,UUID face2)
-    {
-        new FaceVerifyingThread(face1,face2,new Handler()
-        {
+
+    void compare(UUID face1, UUID face2) {
+        new FaceVerifyingThread(face1, face2, new Handler() {
             @Override
-            public void handleMessage(Message msg)
-            {
-                boolean isIdentical=msg.getData().getBoolean("isIdentical");
-                double confidence=msg.getData().getDouble("confidence");
+            public void handleMessage(Message msg) {
+                boolean isIdentical = msg.getData().getBoolean("isIdentical");
+                double confidence = msg.getData().getDouble("confidence");
                 waiting.setCancelable(true);
-                if(isIdentical)
-                    waiting.setMessage("Authorized."+"Confidence: "+Double.toString(confidence));
+                if (isIdentical)
+                    waiting.setMessage("Authorized." + "Confidence: " + Double.toString(confidence));
                 else
-                    waiting.setMessage("UnAuthorized."+"Confidence: "+Double.toString(confidence));
+                    waiting.setMessage("UnAuthorized." + "Confidence: " + Double.toString(confidence));
             }
         }).start();
     }
-    class CameraViewCallback implements SurfaceHolder.Callback {
 
-        @Override
-        public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-            Log.d(TAG, "camera view updating...");
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-
-        }
-
-    }
     class FaceVisualizationView extends View {
         int m_src = FACE_VIEW_CONTOUR;
 
         public FaceVisualizationView(Context context) {
             super(context);
         }
+
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);

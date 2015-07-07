@@ -17,7 +17,8 @@ import java.util.UUID;
 public class FaceUtils {
     private final static String TAG = "FaceUtils";
     //public static FaceDetectionObserver FACES = new FaceDetectionObserver(null, null);
-    public static FaceDetectionObserver FACES=null;
+    public static FaceDetectionObserver FACES = null;
+
     private static Face[] detectFaceInThreading(ByteArrayInputStream image, Handler handler) {
         FaceDetectionThread task = new FaceDetectionThread(image);
         FACES = new FaceDetectionObserver(task, handler);
@@ -53,6 +54,7 @@ public class FaceUtils {
         ByteArrayInputStream inputStream = ImageUtils.getByteArrayInputStream(data);
         return detectFaceInThreading(inputStream, cli, handler);
     }
+
     /**
      * Created by yulw on 7/5/2015.
      */
@@ -88,13 +90,14 @@ public class FaceUtils {
         public Face[] getResult() {
             return m_result;
         }
-        public UUID[] getFacesIds()
-        {
-            if(m_result==null)
+
+        public UUID[] getFacesIds() {
+            if (m_result == null)
                 return null;
-            List<UUID> faceId=new ArrayList<UUID>();
-            for(Face face:m_result) {
-                faceId.add(face.faceId);;
+            List<UUID> faceId = new ArrayList<UUID>();
+            for (Face face : m_result) {
+                faceId.add(face.faceId);
+                ;
             }
             return faceId.toArray(new UUID[faceId.size()]);
         }

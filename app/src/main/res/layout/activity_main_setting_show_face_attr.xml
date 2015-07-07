@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@color/background_floating_material_light">
+    android:background="@color/background_material_light">
 
     <RadioGroup
         android:layout_width="wrap_content"
@@ -10,18 +10,18 @@
 
 
         <RadioButton
-            android:id="@+id/fragment_face_demo_setting_radio_button_front_camera"
+            android:id="@+id/activity_main_setting_face_attr_yes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Use FrontCamera"
+            android:text="Yes"
             android:textColor="@color/background_floating_material_dark" />
 
         <RadioButton
-            android:id="@+id/fragment_face_demo_setting_radio_button_back_camera"
+            android:id="@+id/activity_main_setting_face_attr_no"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/fragment_face_demo_setting_radio_button_front_camera"
-            android:text="Use BackCamera"
+            android:layout_below="@+id/activity_main_setting_face_attr_yes"
+            android:text="No"
             android:textColor="@color/background_floating_material_dark" />
 
     </RadioGroup>

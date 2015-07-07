@@ -119,41 +119,44 @@ public class PersonUtils {
         if (personsArr.size() == 0)
             return null;
         m_lastResolve = personsArr.get(0);
-        if(m_lastResolve!=null)
-            Log.d("Obtained Person Name:",m_lastResolve.m_name);
+        if (m_lastResolve != null)
+            Log.d("Obtained Person Name:", m_lastResolve.m_name);
         else
-            Log.d("Obtained Person Name:","NULL");
+            Log.d("Obtained Person Name:", "NULL");
         return m_lastResolve;
     }
 
     public static void removeData() {
-        String configPath= Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName() + "/" + PersonInfoFile;
-        File config=new File(configPath);
-        if(config.isFile())
+        String configPath = Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName() + "/" + PersonInfoFile;
+        File config = new File(configPath);
+        if (config.isFile())
             config.delete();
-        if(m_lastResolve==null)
+        if (m_lastResolve == null)
             resolveInfo();
-        String imagePath= Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName() + "/" +m_lastResolve.m_name+".bmp";
-        File image=new File(imagePath);
-        if(image.isFile())
+        String imagePath = Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName() + "/" + m_lastResolve.m_name + ".bmp";
+        File image = new File(imagePath);
+        if (image.isFile())
             image.delete();
     }
+
     public static Bitmap getMasterBitMap() {
-        if(m_lastResolve==null)
+        if (m_lastResolve == null)
             resolveInfo();
-        Bitmap bitmap=null;
-        bitmap=ImageUtils.loadImage(m_lastResolve.m_name);
+        Bitmap bitmap = null;
+        bitmap = ImageUtils.loadImage(m_lastResolve.m_name);
         return bitmap;
     }
 }
-class Person extends com.microsoft.projectoxford.face.contract.Person
-{
+
+class Person extends com.microsoft.projectoxford.face.contract.Person {
     public String m_name = "Test";
     public String m_group = "Microsoft";
+
     Person(String name, String group) {
         m_name = name;
         m_group = group;
     }
+
     Person() {
 
     }

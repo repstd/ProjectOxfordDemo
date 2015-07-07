@@ -10,18 +10,18 @@
 
 
         <RadioButton
-            android:id="@+id/fragment_face_demo_setting_radio_button_front_camera"
+            android:id="@+id/activity_main_setting_lang_en"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Use FrontCamera"
+            android:text="English"
             android:textColor="@color/background_floating_material_dark" />
 
         <RadioButton
-            android:id="@+id/fragment_face_demo_setting_radio_button_back_camera"
+            android:id="@+id/activity_main_setting_lang_ch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/fragment_face_demo_setting_radio_button_front_camera"
-            android:text="Use BackCamera"
+            android:layout_below="@+id/activity_main_setting_lang_ch"
+            android:text="Chinese"
             android:textColor="@color/background_floating_material_dark" />
 
     </RadioGroup>

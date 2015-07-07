@@ -12,7 +12,7 @@
         android:background="#F44336"
         android:elevation="@dimen/twenty"
         android:minHeight="?attr/actionBarSize"
-        android:theme="@style/Base.TextAppearance.AppCompat"
+        android:theme="@style/Widget.AppCompat.Toolbar"
         tools:context=".Toolbar" />
 
 

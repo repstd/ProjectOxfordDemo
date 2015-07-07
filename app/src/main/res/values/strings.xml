@@ -3,6 +3,8 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="action_settings_lang">Language Preference</string>
+    <string name="action_settings_show_face_attr">Show Face Attr</string>
 
     <!--AzureSubscriptionKeys-->
     <!--All will be regarded as "Please Input Valid API Keys" if not set-->

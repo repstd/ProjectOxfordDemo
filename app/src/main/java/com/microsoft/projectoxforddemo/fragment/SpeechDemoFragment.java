@@ -52,6 +52,7 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
         super.onViewCreated(view, savedInstanceState);
         loadComponents();
         addClickListeners();
+        m_container.setToolbarIcon(R.drawable.ic_perm_identity_black_24dp);
     }
 
     @Override

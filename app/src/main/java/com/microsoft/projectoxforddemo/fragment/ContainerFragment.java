@@ -53,8 +53,8 @@ public class ContainerFragment extends BaseFragment implements Container {
     void loadComponents() {
         m_tabTitles = new ArrayList<String>(Arrays.asList(getActivity().getResources().getStringArray(R.array.fragmemt_container_tabs_title)));
         m_toolbar = (Toolbar) getView().findViewById(R.id.activity_main_toolbar);
+        m_toolbar.inflateMenu(R.menu.menu_main);
         m_toolbar.setTitle(getToolbarTitle());
-        m_toolbar.setNavigationIcon(R.drawable.abc_ic_voice_search_api_mtrl_alpha);
         m_toolbar.setTitleTextColor(Color.WHITE);
         m_tabStrip = (PagerSlidingTabStrip) getView().findViewById(R.id.fragment_container_tab);
         m_tabStrip.setShouldExpand(true);
@@ -67,6 +67,7 @@ public class ContainerFragment extends BaseFragment implements Container {
             m_tabStrip.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
                 }
 
                 @Override
@@ -76,10 +77,10 @@ public class ContainerFragment extends BaseFragment implements Container {
 
                 @Override
                 public void onPageScrollStateChanged(int state) {
-
                 }
             });
         }
+
     }
 
     @Override
