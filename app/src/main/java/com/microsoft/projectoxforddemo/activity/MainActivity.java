@@ -16,10 +16,15 @@ import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 /**
  * Created by admin on 7/2/2015.
  */
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity
+{
+    private  SharedPreferences m_sharedPrefereneSetting;
+    private  SharedPreferences.Editor m_editor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        m_sharedPrefereneSetting = getApplicationContext().getSharedPreferences("setting", MODE_PRIVATE);
+        m_editor = m_sharedPrefereneSetting.edit();
     }
 
     @Override
@@ -98,6 +103,9 @@ public class MainActivity extends BaseActivity {
                     case R.id.action_setting_item_face_attr:
                         setShowingFaceAttributes();
                         break;
+                    case R.id.action_setting_item_input_type:
+                        setInputType();
+                        break;
                 }
                 return true;
             }
@@ -106,8 +114,6 @@ public class MainActivity extends BaseActivity {
     }
 
     void setLanguagePreference() {
-        final SharedPreferences settings = getApplicationContext().getSharedPreferences("setting", MODE_PRIVATE);
-        final SharedPreferences.Editor editor = settings.edit();
         AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK);
         builder.setTitle("Select Language Preference");
         View layout = getLayoutInflater().inflate(R.layout.activity_main_setting_language, null);
@@ -120,27 +126,25 @@ public class MainActivity extends BaseActivity {
                 Log.d("LanguagePreference", "onclick");
                 dialog.dismiss();
                 dialog.cancel();
-                editor.clear();
-                editor.putString("Lang", "ch-zn");
+                m_editor.clear();
+                m_editor.putString("Lang", "ch-zn");
                 OxfordRecognitionManager.instance().setLanguage("ch-zh");
-                editor.commit();
+                m_editor.commit();
             }
         });
         layout.findViewById(R.id.activity_main_setting_lang_en).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 dialog.cancel();
-                editor.clear();
-                editor.putString("Lang", "en-us");
+                m_editor.clear();
+                m_editor.putString("Lang", "en-us");
                 OxfordRecognitionManager.instance().setLanguage("en-us");
-                editor.commit();
+                m_editor.commit();
             }
         });
     }
 
     void setShowingFaceAttributes() {
-        final SharedPreferences settings = getApplicationContext().getSharedPreferences("setting", MODE_PRIVATE);
-        final SharedPreferences.Editor editor = settings.edit();
         AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK);
         builder.setTitle("Show Face Attributes?");
         View layout = getLayoutInflater().inflate(R.layout.activity_main_setting_show_face_attr, null);
@@ -151,9 +155,9 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 dialog.cancel();
-                editor.clear();
-                editor.putBoolean("ShowingFaceAttr", true);
-                editor.commit();
+                m_editor.clear();
+                m_editor.putBoolean("ShowingFaceAttr", true);
+                m_editor.commit();
                 //Log.d("SettingShowingFacialAttr","#yes");
             }
         });
@@ -161,10 +165,36 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 dialog.cancel();
-                editor.clear();
-                editor.putBoolean("ShowingFaceAttr", false);
+                m_editor.clear();
+                m_editor.putBoolean("ShowingFaceAttr", false);
                 //Log.d("SettingShowingFacialAttr","#no");
-                editor.commit();
+                m_editor.commit();
+            }
+        });
+    }
+    void setInputType() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK);
+        builder.setTitle("Select How To Input");
+        View layout = getLayoutInflater().inflate(R.layout.activity_main_setting_input_type, null);
+        builder.setView(layout);
+        final AlertDialog dialog = builder.create();
+        builder.show();
+        layout.findViewById(R.id.activity_main_setting_input_by_speech).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.cancel();
+                m_editor.clear();
+                m_editor.putString("InputType", "Speech");
+                m_editor.commit();
+            }
+        });
+        layout.findViewById(R.id.activity_main_setting_input_by_text).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.cancel();
+                m_editor.clear();
+                m_editor.putString("InputType", "Text");
+                m_editor.commit();
             }
         });
     }

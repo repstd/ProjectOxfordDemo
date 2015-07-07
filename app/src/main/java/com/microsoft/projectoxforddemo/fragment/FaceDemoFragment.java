@@ -32,6 +32,7 @@ import com.microsoft.projectoxforddemo.utils.FaceUtils;
 import com.microsoft.projectoxforddemo.utils.FaceVerifyingThread;
 import com.microsoft.projectoxforddemo.utils.ImageUtils;
 import com.microsoft.projectoxforddemo.utils.PersonUtils;
+import com.microsoft.projectoxforddemo.utils.SpeechRecognitionThread;
 
 import java.io.IOException;
 import java.util.List;
@@ -342,6 +343,10 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         final View layout = FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_show_face_attributes, null);
         builder.setView(layout);
         builder.setTitle("FaceAttributes");
+        //show name
+        EditText nameEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_name);
+        nameEditText.setText(PersonUtils.getUserName());
+
         //show age
         EditText ageEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_age);
         ageEditText.setText(Double.toString(attr.age));
@@ -376,8 +381,13 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
 
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                promptForInfo();
+            public void onClick(DialogInterface dialog, int which){
+                SharedPreferences inputTypeDetail=getActivity().getApplicationContext().getSharedPreferences("setting",Context.MODE_PRIVATE);
+                String type=inputTypeDetail.getString("InputType","");
+                if(type.equals("Speech"))
+                    promptForInfoBySpeech();
+                else
+                    promptForInfoByText();
             }
         });
         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -389,7 +399,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         builder.show();
     }
 
-    void promptForInfo() {
+    void promptForInfoByText() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
         final View promptLayout = FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_input_id, null);
         builder.setView(promptLayout);
@@ -410,7 +420,31 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         builder.show();
         m_faceView.draw(FACE_VIEW_HOME_IMAGE);
     }
+    void promptForInfoBySpeech()
+    {
+        //trying to using SpeechToText instead
+        final AlertDialog.Builder builderSpeech = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        builderSpeech.setTitle("OxfordSpeech");
+        builderSpeech.setMessage("Listening...");
 
+        final SpeechRecognitionThread speechThread=new SpeechRecognitionThread(FaceDemoFragment.this.getActivity(),null,new Handler()
+        {
+            @Override
+            public void handleMessage(Message msg) {
+                builderSpeech.setMessage(msg.getData().toString());
+                String result=msg.getData().getString("HighestConfidenceResult");
+            }
+        });
+
+        builderSpeech.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                speechThread.closeClient();
+            }
+        });
+        builderSpeech.show();
+        speechThread.start();;
+    }
     void verify() {
         //save the current faces
         final UUID[] currentCapturedFaceId = FaceUtils.FACES.getFacesIds();

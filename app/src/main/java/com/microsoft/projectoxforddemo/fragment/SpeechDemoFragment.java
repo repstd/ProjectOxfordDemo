@@ -144,21 +144,23 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
         return "Text: " + phrase.DisplayText + " Confidence: " + phrase.Confidence;
     }
 
-    //Interfaces for Speech Recognition
-    @Override
-    public void onPartialResponseReceived(String s) {
+        //Interfaces for Speech Recognition
+        @Override
+        public void onPartialResponseReceived(String s) {
         updateTextView("Partial " + s);
     }
 
     @Override
-    public void onFinalResponseReceived(RecognitionResult recognitionResult) {
+    public void onFinalResponseReceived(RecognitionResult recognitionResult)
+    {
         boolean isFinalDicationMessage = m_recoMode == SpeechRecognitionMode.LongDictation &&
                 (recognitionResult.RecognitionStatus == RecognitionStatus.EndOfDictation ||
                         recognitionResult.RecognitionStatus == RecognitionStatus.DictationEndSilenceTimeout);
         if (isFinalDicationMessage && m_recoMode == SpeechRecognitionMode.LongDictation) {
             closeClient();
         } else if (!isFinalDicationMessage) {
-            for (int i = 0; i < recognitionResult.Results.length; i++) {
+            for (int i = 0; i < recognitionResult.Results.length; i++)
+            {
                 updateTextView("FinalResults:[ " + i + " " + parseResult(recognitionResult.Results[i]) + " ]");
             }
         }

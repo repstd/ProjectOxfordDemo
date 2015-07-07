@@ -5,14 +5,25 @@
     android:layout_height="match_parent">
 
     <EditText
-        android:id="@+id/fragment_face_demo_face_attr_gender"
+        android:id="@+id/fragment_face_demo_face_attr_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textColor="@color/background_floating_material_dark"
         android:ems="10"
         android:inputType="number"
-        android:text="Age: " />
+        android:text="Name:" />
+
+    <EditText
+        android:id="@+id/fragment_face_demo_face_attr_gender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/background_floating_material_dark"
+        android:layout_below="@+id/fragment_face_demo_face_attr_name"
+        android:ems="10"
+        android:inputType="number"
+        android:text="Age:" />
 
     <EditText
         android:id="@+id/fragment_face_demo_face_attr_age"
@@ -23,5 +34,5 @@
         android:layout_weight="1"
         android:ems="10"
         android:inputType="number"
-        android:text="Gender: " />
+        android:text="Gender:" />
 </RelativeLayout>

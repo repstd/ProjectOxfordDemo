@@ -127,16 +127,26 @@ public class PersonUtils {
     }
 
     public static void removeData() {
-        String configPath = Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName() + "/" + PersonInfoFile;
-        File config = new File(configPath);
-        if (config.isFile())
-            config.delete();
-        if (m_lastResolve == null)
-            resolveInfo();
-        String imagePath = Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName() + "/" + m_lastResolve.m_name + ".bmp";
-        File image = new File(imagePath);
-        if (image.isFile())
-            image.delete();
+        String configPath = Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName();
+        deleteDirectory(new File(configPath));
+        //remove the historical data
+        m_lastResolve=null;
+    }
+
+    static boolean deleteDirectory(File dir) {
+        if (!dir.exists() || !dir.isDirectory()) {
+            return false;
+        }
+        String[] files = dir.list();
+        for (int i = 0, len = files.length; i < len; i++) {
+            File f = new File(dir, files[i]);
+            if (f.isDirectory()) {
+                deleteDirectory(f);
+            } else {
+                f.delete();
+            }
+        }
+        return dir.delete();
     }
 
     public static Bitmap getMasterBitMap() {
@@ -145,6 +155,14 @@ public class PersonUtils {
         Bitmap bitmap = null;
         bitmap = ImageUtils.loadImage(m_lastResolve.m_name);
         return bitmap;
+    }
+    public static String getUserName()
+    {
+        if(m_lastResolve==null)
+            resolveInfo();
+        if(m_lastResolve==null)
+            return "InvalidHistoricalInputFound";
+        return m_lastResolve.m_name;
     }
 }
 
