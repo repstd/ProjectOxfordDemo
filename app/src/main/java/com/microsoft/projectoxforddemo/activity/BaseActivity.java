@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.microsoft.projectoxforddemo.R;
 
@@ -18,6 +19,11 @@ public abstract class BaseActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                        | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(getLayoutID());
         loadToolbar();
         loadComponents();
@@ -37,7 +43,6 @@ public abstract class BaseActivity extends ActionBarActivity {
             Log.d(TAG, e.getMessage());
         }
     }
-
     abstract int getLayoutID();
 
     abstract String getToolbarTitle();

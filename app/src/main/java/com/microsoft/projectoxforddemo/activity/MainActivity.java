@@ -1,9 +1,11 @@
 package com.microsoft.projectoxforddemo.activity;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,7 +18,8 @@ import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 /**
  * Created by admin on 7/2/2015.
  */
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity
+{
     private SharedPreferences m_sharedPrefereneSetting;
     private SharedPreferences.Editor m_editor;
 
@@ -52,6 +55,9 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        Intent serviceIntent = new Intent();
+        serviceIntent.setClass(this, ScreenLocker.class);
+        startService(serviceIntent);
     }
 
     @Override
@@ -74,6 +80,14 @@ public class MainActivity extends BaseActivity {
         super.onStart();
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, android.view.KeyEvent event)
+    {
+        if ((keyCode == KeyEvent.KEYCODE_HOME))
+            return super.onKeyDown(keyCode,event);
+        else
+            return true;
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -199,4 +213,5 @@ public class MainActivity extends BaseActivity {
             }
         });
     }
+
 }

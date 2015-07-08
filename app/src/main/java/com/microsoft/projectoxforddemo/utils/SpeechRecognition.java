@@ -80,8 +80,17 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
             Log.d(TAG, "SpeechClientInit");
         }
     }
-
-    public void closeClient() {
+    public void closeClient()  {
+        new Thread(new Runnable() {
+            @Override
+            public void run()  {
+                closeClientRun();
+            }
+        }).start();
+        Log.d(TAG,"ClosingThreadStart");
+    }
+    public void closeClientRun()
+    {
         if (m_micClient != null)
         {
             boolean isReceivedResponse = m_micClient.waitForFinalResponse(m_waitSeconds);
@@ -93,6 +102,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
             }
             m_micClient = null;
             m_isActive = false;
+            Log.d(TAG,"ClosingThreadEnded");
         }
     }
 

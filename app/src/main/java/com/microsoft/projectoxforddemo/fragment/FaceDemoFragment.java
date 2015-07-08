@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -506,8 +507,12 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 boolean isIdentical = msg.getData().getBoolean("isIdentical");
                 double confidence = msg.getData().getDouble("confidence");
                 waiting.setCancelable(true);
-                if (isIdentical)
+                if (isIdentical) {
                     waiting.setMessage("Authorized." + "Confidence: " + Double.toString(confidence));
+                    Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+                    homeIntent.addCategory( Intent.CATEGORY_HOME );
+                    startActivity(homeIntent);
+                }
                 else
                     waiting.setMessage("UnAuthorized." + "Confidence: " + Double.toString(confidence));
             }
