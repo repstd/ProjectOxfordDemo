@@ -7,13 +7,13 @@ import android.support.v7.widget.Toolbar;
  */
 public interface Container {
 
-    public String getName();
+    String getName();
 
-    public Toolbar getToolbar();
+    Toolbar getToolbar();
 
-    public String getToolbarTitle();
+    String getToolbarTitle();
 
-    public void setToolbarTitle(String text);
+    void setToolbarTitle(String text);
 
-    public void setToolbarIcon(int drawable);
+    void setToolbarIcon(int drawable);
 }

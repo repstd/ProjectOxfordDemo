@@ -14,8 +14,7 @@
         android:hint="personId"
         android:inputType="textPersonName"
         android:textColor="@color/background_floating_material_dark"
-        android:textColorHint="@color/background_floating_material_dark"
-        />
+        android:textColorHint="@color/background_floating_material_dark" />
 
     <EditText
         android:id="@+id/fragment_face_demo_input_group_id"
@@ -24,6 +23,5 @@
         android:hint="groupId"
         android:inputType="textPersonName"
         android:textColor="@color/background_floating_material_dark"
-        android:textColorHint="@color/background_floating_material_dark"
-        />
+        android:textColorHint="@color/background_floating_material_dark" />
 </LinearLayout>

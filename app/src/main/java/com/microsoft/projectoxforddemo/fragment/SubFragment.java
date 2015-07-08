@@ -6,5 +6,5 @@ package com.microsoft.projectoxforddemo.fragment;
 //Interface for integrate a fragment in a container fragment.
 public interface SubFragment {
     //called when shift between different view pages happens
-    public void onPageShifted();
+    void onPageShifted();
 }

@@ -14,14 +14,14 @@ import java.util.List;
 /**
  * Created by yulw on 7/5/2015.
  */
-public class FaceDetectionThread extends Thread implements Subject {
+public class FaceDetection extends Thread implements Subject {
     private final String TAG = "DetectionTask";
     List<Observer> m_observers;
     private FaceServiceClient m_client = null;
     private Face[] m_result;
     private InputStream m_para;
 
-    FaceDetectionThread(InputStream para) {
+    FaceDetection(InputStream para) {
         m_observers = new ArrayList<Observer>();
         m_client = new FaceServiceClient(OxfordRecognitionManager.instance().getFaceKey().getPrimary());
         if (m_client == null) {
@@ -31,7 +31,7 @@ public class FaceDetectionThread extends Thread implements Subject {
         m_para = para;
     }
 
-    FaceDetectionThread(InputStream para, FaceServiceClient client) {
+    FaceDetection(InputStream para, FaceServiceClient client) {
         m_para = para;
         m_client = client;
     }

@@ -16,10 +16,10 @@ import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 /**
  * Created by admin on 7/2/2015.
  */
-public class MainActivity extends BaseActivity
-{
-    private  SharedPreferences m_sharedPrefereneSetting;
-    private  SharedPreferences.Editor m_editor;
+public class MainActivity extends BaseActivity {
+    private SharedPreferences m_sharedPrefereneSetting;
+    private SharedPreferences.Editor m_editor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -172,6 +172,7 @@ public class MainActivity extends BaseActivity
             }
         });
     }
+
     void setInputType() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_DARK);
         builder.setTitle("Select How To Input");

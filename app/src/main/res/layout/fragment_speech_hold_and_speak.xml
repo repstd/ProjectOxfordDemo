@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/fragment_speech_demo_hold_and_speak"
+        android:src="@drawable/ic_settings_voice_black_48dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+    />
+</RelativeLayout>

@@ -24,7 +24,8 @@ import javax.xml.transform.stream.StreamResult;
 /**
  * Created by yulw on 7/4/2015.
  */
-public class PersonUtils {
+public class PersonUtils
+{
     private static String PersonInfoFile = "person.xml";
     private static Person m_lastResolve = null;
 
@@ -130,7 +131,7 @@ public class PersonUtils {
         String configPath = Environment.getExternalStorageDirectory() + ImageUtils.getConfig().getDataDiraName();
         deleteDirectory(new File(configPath));
         //remove the historical data
-        m_lastResolve=null;
+        m_lastResolve = null;
     }
 
     static boolean deleteDirectory(File dir) {
@@ -156,11 +157,11 @@ public class PersonUtils {
         bitmap = ImageUtils.loadImage(m_lastResolve.m_name);
         return bitmap;
     }
-    public static String getUserName()
-    {
-        if(m_lastResolve==null)
+
+    public static String getUserName() {
+        if (m_lastResolve == null)
             resolveInfo();
-        if(m_lastResolve==null)
+        if (m_lastResolve == null)
             return "InvalidHistoricalInputFound";
         return m_lastResolve.m_name;
     }

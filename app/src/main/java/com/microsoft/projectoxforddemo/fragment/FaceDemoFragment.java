@@ -24,15 +24,17 @@ import android.widget.Toast;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.microsoft.ProjectOxford.SpeechRecognitionMode;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.contract.FaceAttribute;
 import com.microsoft.projectoxford.face.contract.GenderEnum;
 import com.microsoft.projectoxforddemo.R;
 import com.microsoft.projectoxforddemo.utils.FaceUtils;
-import com.microsoft.projectoxforddemo.utils.FaceVerifyingThread;
+import com.microsoft.projectoxforddemo.utils.FaceVerifying;
 import com.microsoft.projectoxforddemo.utils.ImageUtils;
+import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
 import com.microsoft.projectoxforddemo.utils.PersonUtils;
-import com.microsoft.projectoxforddemo.utils.SpeechRecognitionThread;
+import com.microsoft.projectoxforddemo.utils.SpeechRecognition;
 
 import java.io.IOException;
 import java.util.List;
@@ -63,6 +65,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private AlertDialog m_settingAlertDialog;
     private View m_settingAlertDialogView;
     private FaceServiceClient m_faceCli = null;
+    private String m_finalSpeechResult = null;
     //Index for the cameras in the devices.0 for back-camera and 1 for front-camera;
     private int m_camera_index = ImageUtils.CAMERA_FRONT;
     private boolean m_cameraStatus = false;
@@ -114,7 +117,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         layout.addView(m_fabMenu);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity());
-        m_settingAlertDialogView = (View) FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_setting, null);
+        m_settingAlertDialogView = FaceDemoFragment.this.getActivity().getLayoutInflater().inflate(R.layout.fragment_face_demo_setting, null);
         builder.setView(m_settingAlertDialogView);
         m_settingAlertDialog = builder.create();
         m_settingAlertDialog.setTitle("Choose Camera Device");
@@ -179,13 +182,14 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             @Override
             public void onClick(View view) {
                 m_fabMenu.collapse();
+                if (!OxfordRecognitionManager.instance().isNetworkAvailable(getActivity()))
+                    return;
                 if (!m_cameraStatus) {
                     m_settingAlertDialog.show();
                     return;
                 }
-
                 Toast.makeText(getActivity().getApplicationContext(), "ReadyForFacesDetectionUsingMicrosoftAI", Toast.LENGTH_LONG).show();
-                final AlertDialog waiting = newAlertDialog("requesting the server...");
+                final AlertDialog waiting = newAlertDialog("requesting the server...", null, null, "cancel", null);
                 m_camera.takePicture(null, null, new Camera.PictureCallback() {
                     @Override
                     public void onPictureTaken(byte[] data, Camera camera) {
@@ -218,8 +222,14 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         });
     }
 
-    public AlertDialog newAlertDialog(String title) {
+    public AlertDialog newAlertDialog(String title,
+                                      String positiveButtonText, DialogInterface.OnClickListener positiveButtonListener,
+                                      String negativeButtonText, DialogInterface.OnClickListener negativeButtonListener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        if (positiveButtonText != null && !positiveButtonText.isEmpty())
+            builder.setPositiveButton(positiveButtonText, positiveButtonListener);
+        if (negativeButtonText != null && !negativeButtonText.isEmpty())
+            builder.setPositiveButton(negativeButtonText, negativeButtonListener);
         builder.setMessage(title);
         AlertDialog dialog = builder.create();
         dialog.setCancelable(false);
@@ -381,10 +391,10 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
 
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which){
-                SharedPreferences inputTypeDetail=getActivity().getApplicationContext().getSharedPreferences("setting",Context.MODE_PRIVATE);
-                String type=inputTypeDetail.getString("InputType","");
-                if(type.equals("Speech"))
+            public void onClick(DialogInterface dialog, int which) {
+                SharedPreferences inputTypeDetail = getActivity().getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
+                String type = inputTypeDetail.getString("InputType", "");
+                if (type.equals("Speech"))
                     promptForInfoBySpeech();
                 else
                     promptForInfoByText();
@@ -417,39 +427,63 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 }
             }
         });
+        builder.setNegativeButton("cancel", null);
         builder.show();
         m_faceView.draw(FACE_VIEW_HOME_IMAGE);
     }
-    void promptForInfoBySpeech()
-    {
+
+    void promptForInfoBySpeech() {
+        if (!OxfordRecognitionManager.instance().isNetworkAvailable(getActivity()))
+            return;
         //trying to using SpeechToText instead
         final AlertDialog.Builder builderSpeech = new AlertDialog.Builder(FaceDemoFragment.this.getActivity(), AlertDialog.THEME_HOLO_LIGHT);
         builderSpeech.setTitle("OxfordSpeech");
         builderSpeech.setMessage("Listening...");
-
-        final SpeechRecognitionThread speechThread=new SpeechRecognitionThread(FaceDemoFragment.this.getActivity(),null,new Handler()
-        {
+        final AlertDialog dialog = builderSpeech.create();
+        final SpeechRecognition speechThread = new SpeechRecognition(FaceDemoFragment.this.getActivity(), null, new Handler() {
             @Override
             public void handleMessage(Message msg) {
-                builderSpeech.setMessage(msg.getData().toString());
-                String result=msg.getData().getString("HighestConfidenceResult");
+                super.handleMessage(msg);
+                //builderSpeech.setMessage(msg.toString());
+                String partialResult = msg.getData().getString(SpeechRecognition.HandlerKeyPartialResult);
+                String finalResult = msg.getData().getString(SpeechRecognition.HandlerKeyHighestConfidenceResult);
+                m_finalSpeechResult = finalResult;
+                if (partialResult != null) {
+                    Log.d(TAG, partialResult);
+                    Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "Partial: " + partialResult, Toast.LENGTH_SHORT).show();
+                } else if (finalResult != null) {
+                    Log.d(TAG, finalResult);
+                    Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "Final:" + finalResult, Toast.LENGTH_LONG).show();
+                }
+            }
+        }, SpeechRecognitionMode.ShortPhrase);
+        builderSpeech.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) { builderSpeech.setMessage("Closing...");
+                speechThread.closeClient();
+                //now add the user using recognized speech input
+                if (m_finalSpeechResult != null && !m_finalSpeechResult.isEmpty()) {
+                    PersonUtils.newUser(m_finalSpeechResult, "Speech");
+                    Toast.makeText(FaceDemoFragment.this.getActivity(), "SpeechInputSaved:[personId=" + m_finalSpeechResult + "]", Toast.LENGTH_LONG).show();
+                }
             }
         });
-
-        builderSpeech.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+        builderSpeech.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                builderSpeech.setMessage("Closing...");
                 speechThread.closeClient();
             }
         });
         builderSpeech.show();
-        speechThread.start();;
+        speechThread.start();
     }
+
     void verify() {
         //save the current faces
         final UUID[] currentCapturedFaceId = FaceUtils.FACES.getFacesIds();
         Bitmap masterMap = PersonUtils.getMasterBitMap();
-        waiting = newAlertDialog("verifying...");
+        waiting = newAlertDialog("verifying...", null, null, null, null);
         waiting.show();
         FaceUtils.detectFace(masterMap, new Handler() {
             @Override
@@ -466,7 +500,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     }
 
     void compare(UUID face1, UUID face2) {
-        new FaceVerifyingThread(face1, face2, new Handler() {
+        new FaceVerifying(face1, face2, new Handler() {
             @Override
             public void handleMessage(Message msg) {
                 boolean isIdentical = msg.getData().getBoolean("isIdentical");

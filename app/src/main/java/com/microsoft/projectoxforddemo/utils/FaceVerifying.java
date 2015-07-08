@@ -13,13 +13,13 @@ import java.util.UUID;
 /**
  * Created by v-yuliwa on 7/6/2015.
  */
-public class FaceVerifyingThread extends Thread {
+public class FaceVerifying extends Thread {
     private final String TAG = "FceVerifyingThread";
     private Handler m_handler;
     private FaceServiceClient m_client = null;
     private UUID m_faceOld, m_faceNew;
 
-    public FaceVerifyingThread(UUID faceOld, UUID faceNew, Handler handler) {
+    public FaceVerifying(UUID faceOld, UUID faceNew, Handler handler) {
         m_handler = handler;
         m_faceNew = faceNew;
         m_faceOld = faceOld;

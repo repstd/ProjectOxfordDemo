@@ -1,5 +1,12 @@
 package com.microsoft.projectoxforddemo.utils;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.widget.Toast;
+
 /**
  * Created by admin on 7/3/2015.
  */
@@ -41,6 +48,26 @@ public class OxfordRecognitionManager {
 
     public void setLanguage(String lang) {
         m_lang = lang;
+    }
+
+    public boolean isNetworkAvailable(Activity activity) {
+        Context context = activity.getApplicationContext();
+        ConnectivityManager cm = (ConnectivityManager) activity.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo wifiInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        NetworkInfo mobileInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        if (wifiInfo != null && wifiInfo.isAvailable() && wifiInfo.isConnected()) {
+            return true;
+        } else if (mobileInfo != null && mobileInfo.isAvailable() && mobileInfo.isConnected()) {
+            Toast.makeText(context, "Wifi suggested in order to use Oxford service.", Toast.LENGTH_LONG).show();
+            return true;
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity, AlertDialog.THEME_HOLO_LIGHT);
+            builder.setTitle("Warning");
+            builder.setMessage("NetworkUnavailable");
+            builder.setPositiveButton("Okay", null);
+            builder.show();
+            return false;
+        }
     }
 
     public class Key {

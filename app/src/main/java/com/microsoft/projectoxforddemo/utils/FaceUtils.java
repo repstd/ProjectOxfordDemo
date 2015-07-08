@@ -20,7 +20,7 @@ public class FaceUtils {
     public static FaceDetectionObserver FACES = null;
 
     private static Face[] detectFaceInThreading(ByteArrayInputStream image, Handler handler) {
-        FaceDetectionThread task = new FaceDetectionThread(image);
+        FaceDetection task = new FaceDetection(image);
         FACES = new FaceDetectionObserver(task, handler);
         task.attach(FACES);
         task.start();
@@ -29,7 +29,7 @@ public class FaceUtils {
     }
 
     private static Face[] detectFaceInThreading(ByteArrayInputStream image, FaceServiceClient cli, Handler handler) {
-        FaceDetectionThread task = new FaceDetectionThread(image, cli);
+        FaceDetection task = new FaceDetection(image, cli);
         FACES = new FaceDetectionObserver(task, handler);
         task.attach(FACES);
         task.start();
@@ -60,10 +60,10 @@ public class FaceUtils {
      */
     public static class FaceDetectionObserver implements Observer {
         Face[] m_result = null;
-        FaceDetectionThread m_subject;
+        FaceDetection m_subject;
         private Handler m_handler;
 
-        FaceDetectionObserver(FaceDetectionThread task, Handler handler) {
+        FaceDetectionObserver(FaceDetection task, Handler handler) {
             m_subject = task;
             m_handler = handler;
         }
@@ -97,7 +97,6 @@ public class FaceUtils {
             List<UUID> faceId = new ArrayList<UUID>();
             for (Face face : m_result) {
                 faceId.add(face.faceId);
-                ;
             }
             return faceId.toArray(new UUID[faceId.size()]);
         }

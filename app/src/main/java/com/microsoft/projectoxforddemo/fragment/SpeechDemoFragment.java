@@ -1,6 +1,9 @@
 package com.microsoft.projectoxforddemo.fragment;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,14 +12,12 @@ import android.widget.TextView;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 import com.microsoft.ProjectOxford.ISpeechRecognitionServerEvents;
-import com.microsoft.ProjectOxford.MicrophoneRecognitionClient;
 import com.microsoft.ProjectOxford.RecognitionResult;
-import com.microsoft.ProjectOxford.RecognitionStatus;
 import com.microsoft.ProjectOxford.RecognizedPhrase;
 import com.microsoft.ProjectOxford.SpeechRecognitionMode;
-import com.microsoft.ProjectOxford.SpeechRecognitionServiceFactory;
 import com.microsoft.projectoxforddemo.R;
 import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
+import com.microsoft.projectoxforddemo.utils.SpeechRecognition;
 
 /**
  * Created by admin on 7/2/2015.
@@ -28,17 +29,11 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     private FloatingActionButton m_fabStop;
     private TextView m_textView;
     private Container m_container = null;
-    private MicrophoneRecognitionClient m_micClient = null;
-    private SpeechRecognitionMode m_recoMode;
-    private boolean m_status = false;
-    private int m_waitSeconds;
-    private boolean isReceivedResponse;
+    private SpeechRecognition m_speechClient = null;
 
-    public SpeechDemoFragment() {
-
-    }
 
     public void setContainer(Container c) {
+
         m_container = c;
     }
 
@@ -58,8 +53,6 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        m_recoMode = SpeechRecognitionMode.ShortPhrase;
-        m_waitSeconds = m_recoMode == SpeechRecognitionMode.ShortPhrase ? 20 : 200;
     }
 
     @Override
@@ -85,19 +78,63 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
         m_fabStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //recognizer.start();
-                initClient(OxfordRecognitionManager.instance());
                 m_fabMenu.collapse();
+                initClient();
             }
         });
         m_fabStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                closeClient();
-                //recognizer.Close();
                 m_fabMenu.collapse();
+                closeClient();
             }
         });
+    }
+
+    void holdAndSpeak() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+        View speechLayout = (View) getActivity().getLayoutInflater().inflate(R.layout.fragment_speech_hold_and_speak, null);
+        speechLayout.findViewById(R.id.fragment_speech_demo_hold_and_speak).setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                return false;
+            }
+        });
+        builder.setView(speechLayout);
+        builder.show();
+    }
+
+    void initClient() {
+        clearText();
+        if (!OxfordRecognitionManager.instance().isNetworkAvailable(this.getActivity()))
+            return;
+        if (m_speechClient != null)
+            closeClient();
+        m_speechClient = new SpeechRecognition(this.getActivity(), this, new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                String finalResult=msg.getData().getString(SpeechRecognition.HandlerKeyHighestConfidenceResult);
+                if(finalResult!=null&&!finalResult.isEmpty()) {
+                    AlertDialog.Builder builder=new AlertDialog.Builder(SpeechDemoFragment.this.getActivity(),AlertDialog.THEME_HOLO_DARK);
+                    builder.setTitle("RecognizedResult:");
+                    builder.setMessage(finalResult);
+                    builder.setPositiveButton("Done",null);
+                    builder.show();
+                }
+            }
+        }, SpeechRecognitionMode.LongDictation);
+        m_speechClient.start();
+        updateTextView("Client Started");
+    }
+
+    void closeClient() {
+        if (m_speechClient == null||!m_speechClient.isActive())
+            return;
+        updateTextView("Closing Client");
+        m_speechClient.closeClient();
+        updateTextView("Client Closed");
+        m_speechClient = null;
     }
 
     void updateTextView(String s) {
@@ -112,57 +149,20 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
         m_textView.setText("RealTimeResults:\n");
     }
 
-    void initClient(OxfordRecognitionManager manager) {
-        if (m_status)
-            return;
-        clearText();
-        m_micClient = SpeechRecognitionServiceFactory.createMicrophoneClient(getActivity(),
-                m_recoMode,
-                manager.getLanguage(),
-                this,
-                manager.getSpeechKey().getPrimary());
-        if (m_micClient != null) {
-            updateTextView("SpeechRecognitionStarted.");
-            m_status = true;
-        } else
-            updateTextView("Error in Starting Recognition Client");
-        if (m_micClient != null)
-            m_micClient.startMicAndRecognition();
-    }
-
-    void closeClient() {
-        if (!m_status)
-            return;
-        if (m_micClient != null) {
-            isReceivedResponse = m_micClient.waitForFinalResponse(m_waitSeconds);
-            m_micClient.endMicAndRecognition();
-        }
-        m_status = false;
-    }
-
     String parseResult(RecognizedPhrase phrase) {
-        return "Text: " + phrase.DisplayText + " Confidence: " + phrase.Confidence;
+        return "[Text: " + phrase.DisplayText + " Confidence: " + phrase.Confidence+" ]";
     }
 
-        //Interfaces for Speech Recognition
-        @Override
-        public void onPartialResponseReceived(String s) {
+    //Interfaces for Speech Recognition
+    @Override
+    public void onPartialResponseReceived(String s) {
         updateTextView("Partial " + s);
     }
 
     @Override
-    public void onFinalResponseReceived(RecognitionResult recognitionResult)
-    {
-        boolean isFinalDicationMessage = m_recoMode == SpeechRecognitionMode.LongDictation &&
-                (recognitionResult.RecognitionStatus == RecognitionStatus.EndOfDictation ||
-                        recognitionResult.RecognitionStatus == RecognitionStatus.DictationEndSilenceTimeout);
-        if (isFinalDicationMessage && m_recoMode == SpeechRecognitionMode.LongDictation) {
-            closeClient();
-        } else if (!isFinalDicationMessage) {
-            for (int i = 0; i < recognitionResult.Results.length; i++)
-            {
-                updateTextView("FinalResults:[ " + i + " " + parseResult(recognitionResult.Results[i]) + " ]");
-            }
+    public void onFinalResponseReceived(RecognitionResult recognitionResult) {
+        for(int i=0;i<recognitionResult.Results.length;i++) {
+            updateTextView("Final: "+parseResult(recognitionResult.Results[i]));
         }
     }
 
@@ -178,20 +178,18 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
 
     @Override
     public void onAudioEvent(boolean b) {
-        if (!b) {
-            closeClient();
-        }
-        updateTextView("MicroPhone status: " + b);
+        if (b)
+            updateTextView("AudioEvent: MicroPhone On");
+        else
+            updateTextView("AudioEvent: MicroPhone Off");
     }
 
     @Override
     public void onPageShifted() {
         m_container.setToolbarIcon(R.drawable.ic_keyboard_voice_black_24dp);
         m_container.setToolbarTitle(getToolbarTitle());
-        if (m_status) {
-            m_micClient.endMicAndRecognition();
-            clearText();
-        }
+        clearText();
+        closeClient();
         if (m_fabMenu.isExpanded())
             m_fabMenu.collapse();
     }
