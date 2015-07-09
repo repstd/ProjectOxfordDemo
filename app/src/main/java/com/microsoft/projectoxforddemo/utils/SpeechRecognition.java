@@ -21,11 +21,8 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     private final String TAG = "SpeechRecognition";
     public final static String HandlerKeyHighestConfidenceResult="HighestConfidenceResult";
     public final static String HandlerKeyPartialResult="PartialResult";
-    public final static String HandlerKeyError="Error";
-    public final static String HandlerAudioEvent="AudioEvent";
-    public final static String HandlerKeyStart="Start";
-    public final static String HandlerKeyEnd="End";
-
+    public final static String HandlerKeyEvent="Event";
+    public final static String HandlerKeyException="Exception";
     private MicrophoneRecognitionClient m_micClient = null;
     private SpeechRecognitionMode m_recoMode;
     private ISpeechRecognitionServerEvents m_eventCallback;
@@ -49,64 +46,67 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
         this.m_handler = handler;
         this.m_eventCallback = eventCallback;
         m_recoMode = mode;
-        m_waitSeconds = m_recoMode == SpeechRecognitionMode.ShortPhrase ? 20 : 200;
+        m_waitSeconds = m_recoMode == SpeechRecognitionMode.ShortPhrase ? 50 : 500;
         m_isActive = false;
     }
 
     @Override
-    public void run() {
-        try {
-            if (m_micClient == null)
-                initClient();
-            m_micClient.startMicAndRecognition();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d(TAG, e.getMessage());
-        }
+    public void run()
+    {
+
+        if (m_micClient == null)
+            initClient();
+        m_micClient.startMicAndRecognition();
     }
 
-    public void initClient() throws Exception {
-        m_micClient = SpeechRecognitionServiceFactory.createMicrophoneClient(m_activity,
-                m_recoMode,
-                OxfordRecognitionManager.instance().getLanguage(),
-                this,
-                OxfordRecognitionManager.instance().getSpeechKey().getPrimary());
-        if (m_micClient == null) {
-            sendHandlerMessage(HandlerKeyStart, Boolean.toString(false));
-            throw new Exception("Fail to connect to SpeechRecognitionService");
-        } else {
-            m_isActive = true;
-            sendHandlerMessage(HandlerKeyStart, Boolean.toString(true));
-            Log.d(TAG, "SpeechClientInit");
+    void initClient(){
+        try {
+            m_micClient = SpeechRecognitionServiceFactory.createMicrophoneClient(m_activity,
+                    m_recoMode,
+                    OxfordRecognitionManager.instance().getLanguage(),
+                    this,
+                    OxfordRecognitionManager.instance().getSpeechKey().getPrimary());
         }
+        catch (Exception e) {
+            sendHandlerMessage(HandlerKeyException, "Exception#"+e.getMessage());
+        }
+        if (m_micClient == null) {
+            sendHandlerMessage(HandlerKeyEvent, "SpeechClientFailedToStart");
+            return;
+        }
+        m_isActive = true;
+        sendHandlerMessage(HandlerKeyEvent, "SpeechClientStart");
+        Log.d(TAG, "SpeechClientInit");
     }
-    public void closeClient()  {
-        new Thread(new Runnable() {
+    synchronized public void closeClient()  {
+        Thread th=new Thread(new Runnable() {
             @Override
             public void run()  {
                 closeClientRun();
             }
-        }).start();
+        });
+        th.start();
+        m_handler=null;
         Log.d(TAG,"ClosingThreadStart");
     }
     public void closeClientRun()
     {
         if (m_micClient != null)
         {
-            boolean isReceivedResponse = m_micClient.waitForFinalResponse(m_waitSeconds);
+            m_isActive = false;
+            //boolean isReceivedResponse = m_micClient.waitForFinalResponse(m_waitSeconds);
             m_micClient.endMicAndRecognition();
-            sendHandlerMessage(HandlerKeyError, "yes");
+            sendHandlerMessage(HandlerKeyEvent, "SpeechClientClosed");
             if(m_recoMode==SpeechRecognitionMode.LongDictation) {
                 Log.d(TAG,"sending final result for LongDictation");
                 sendHandlerMessage(HandlerKeyHighestConfidenceResult,m_hignestResult);
             }
             m_micClient = null;
-            m_isActive = false;
             Log.d(TAG,"ClosingThreadEnded");
         }
     }
 
-    public boolean isActive() {
+    synchronized public boolean isActive() {
         return m_isActive;
     }
 
@@ -174,7 +174,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     public void onError(int i, String s) {
         if (m_eventCallback != null)
             m_eventCallback.onError(i, s);
-        sendHandlerMessage(HandlerKeyError, Integer.toString(i) + "#" + s);
+        sendHandlerMessage(HandlerKeyEvent, "Error"+" " +s);
         Log.d(TAG, "Error...");
     }
 
@@ -182,10 +182,13 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     public void onAudioEvent(boolean b) {
         if (m_eventCallback != null)
             m_eventCallback.onAudioEvent(b);
-        sendHandlerMessage(HandlerAudioEvent, Boolean.toString(b));
+        if(b)
+            sendHandlerMessage(HandlerKeyEvent, "AudioService Start");
+        else
+            sendHandlerMessage(HandlerKeyEvent, "AudioService Close");
     }
 
-    void sendHandlerMessage(String key, String value) {
+    synchronized void sendHandlerMessage(String key, String value) {
         if (m_handler == null)
             return;
         Bundle bundle = new Bundle();

@@ -56,8 +56,8 @@ public class MainActivity extends BaseActivity
     protected void onStop() {
         super.onStop();
         Intent serviceIntent = new Intent();
-        serviceIntent.setClass(this, ScreenLocker.class);
-        startService(serviceIntent);
+        //serviceIntent.setClass(this, ScreenLocker.class);
+        //startService(serviceIntent);
     }
 
     @Override
@@ -141,8 +141,8 @@ public class MainActivity extends BaseActivity
                 dialog.dismiss();
                 dialog.cancel();
                 m_editor.clear();
-                m_editor.putString("Lang", "ch-zn");
-                OxfordRecognitionManager.instance().setLanguage("ch-zh");
+                m_editor.putString("Lang", "zh-cn");
+                OxfordRecognitionManager.instance().setLanguage("zh-cn");
                 m_editor.commit();
             }
         });

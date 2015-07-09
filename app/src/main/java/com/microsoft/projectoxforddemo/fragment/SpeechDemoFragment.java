@@ -132,7 +132,7 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
         if (m_speechClient == null||!m_speechClient.isActive())
             return;
         updateTextView("Closing Client");
-        m_speechClient.closeClient();
+        m_speechClient.closeClientRun();
         updateTextView("Client Closed");
         m_speechClient = null;
     }

@@ -50,6 +50,8 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     public static final int FACE_VIEW_FACE = 1;
     public static final int FACE_VIEW_HOME_IMAGE = 2;
     public static final int FACE_VIEW_CONTOUR = 4;
+    private final int RECOGNITION_START_BY_SPEECH=0;
+    private final int RECOGNITION_START_BY_BUTTON=1;
     private final String TAG = "FaceDemoFragment";
     ProgressDialog m_progressDialog;
     AlertDialog waiting;
@@ -71,8 +73,49 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private int m_camera_index = ImageUtils.CAMERA_FRONT;
     private boolean m_cameraStatus = false;
 
+    private SpeechRecognition m_lockScreenSpeechCli = null;
+    private AlertDialog m_unlockWaiting=null;
+
     public void setContainer(Container c) {
         m_container = c;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart");
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
+
+        if (m_cameraStatus) {
+            stopPreview();
+            closeCamera();
+            m_cameraStatus = false;
+        }
+        closeUnlockThread();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+        m_faceView.draw(FACE_VIEW_HOME_IMAGE);
+        startUnlockThread();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
     }
 
     @Override
@@ -80,6 +123,65 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         super.onCreate(savedInstanceState);
         m_progressDialog = new ProgressDialog(getActivity().getApplicationContext());
         m_progressDialog.setTitle("FaceDemo");
+    }
+
+    void startUnlockThread()
+    {
+        m_unlockWaiting=newAlertDialog("Welcome",
+            "Okay", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        },
+            "Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                closeUnlockThread();
+            }
+        });
+        m_unlockWaiting.setMessage("listening..");
+        m_lockScreenSpeechCli = new SpeechRecognition(this.getActivity(), null,
+                new Handler()
+                {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        super.handleMessage(msg);
+                        String result = msg.getData().getString(SpeechRecognition.HandlerKeyHighestConfidenceResult);
+                        String partial = msg.getData().getString(SpeechRecognition.HandlerKeyPartialResult);
+                        String e=msg.getData().getString(SpeechRecognition.HandlerKeyEvent);
+                        String exp=msg.getData().getString(SpeechRecognition.HandlerKeyException);
+                        if(exp!=null&&!exp.isEmpty()) {
+                            m_unlockWaiting.setMessage("InternalError");
+                            closeUnlockThread();
+                        }
+                        if(e!=null&&!e.isEmpty()) {
+                            m_unlockWaiting.setMessage(e);
+                        }
+                        if (m_lockScreenSpeechCli != null && (result != null || partial != null))
+                        {
+                            if (!m_cameraStatus) {
+                                initCamera();
+                                startPreview();
+                                m_cameraStatus = true;
+                            }
+                            if(m_camera==null)
+                                return;
+                            m_lockScreenSpeechCli.closeClient();
+                            m_unlockWaiting.cancel();
+                            m_lockScreenSpeechCli=null;
+                            m_unlockWaiting.cancel();
+                            recognize(RECOGNITION_START_BY_SPEECH);
+                        }
+                    }
+                },SpeechRecognitionMode.LongDictation);
+        m_unlockWaiting.show();
+        m_lockScreenSpeechCli.start();
+    }
+
+    void closeUnlockThread() {
+        if (m_lockScreenSpeechCli != null && m_lockScreenSpeechCli.isActive())
+            m_lockScreenSpeechCli.closeClient();
     }
 
     @Override
@@ -92,11 +194,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         super.onViewCreated(view, savedInstanceState);
         loadComponents();
         m_faceView.draw(FACE_VIEW_HOME_IMAGE);
-        /*
-        initCamera();
-        startPreview();
-        m_cameraStatus = true;
-        */
     }
 
     @Override
@@ -183,35 +280,11 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             @Override
             public void onClick(View view) {
                 m_fabMenu.collapse();
-                if (!OxfordRecognitionManager.instance().isNetworkAvailable(getActivity()))
-                    return;
                 if (!m_cameraStatus) {
                     m_settingAlertDialog.show();
                     return;
                 }
-                Toast.makeText(getActivity().getApplicationContext(), "ReadyForFacesDetectionUsingMicrosoftAI", Toast.LENGTH_LONG).show();
-                final AlertDialog waiting = newAlertDialog("requesting the server...", null, null, "cancel", null);
-                m_camera.takePicture(null, null, new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera camera) {
-
-                        FaceUtils.detectFace(data, new Handler() {
-                            @Override
-                            public void handleMessage(Message msg) {
-                                int result = -1;
-                                result = msg.getData().getInt("faces");
-                                Log.d(TAG, "BackgroundFaceRecognitionTaskEnded.Result: " + Integer.toString(result));
-                                if (result == 1) {
-                                    onFaceDetected();
-                                    Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceFound", Toast.LENGTH_LONG).show();
-                                } else
-                                    Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceNotFound", Toast.LENGTH_LONG).show();
-                                waiting.cancel();
-                            }
-                        });
-                    }
-                });
-                waiting.show();
+                recognize(RECOGNITION_START_BY_BUTTON);
             }
         });
         m_fabReset.setOnClickListener(new View.OnClickListener() {
@@ -219,6 +292,45 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             public void onClick(View view) {
                 PersonUtils.removeData();
                 m_fabMenu.collapse();
+            }
+        });
+    }
+    private int m_misMatchCnt=0;
+    void recognize(final int type)
+    {
+        if (!OxfordRecognitionManager.instance().isNetworkAvailable(getActivity()))
+            return;
+        Toast.makeText(getActivity().getApplicationContext(), "ReadyForFacesDetectionUsingMicrosoftAI", Toast.LENGTH_LONG).show();
+        final AlertDialog waiting = newAlertDialog("requesting the server...", null, null, "cancel", null);
+        waiting.show();
+        m_camera.takePicture(null, null, new Camera.PictureCallback() {
+            @Override
+            public void onPictureTaken(byte[] data, Camera camera) {
+
+                FaceUtils.detectFace(data, new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        int result = -1;
+                        result = msg.getData().getInt("faces");
+                        Log.d(TAG, "BackgroundFaceRecognitionTaskEnded.Result: " + Integer.toString(result));
+                        if (result == 1) {
+                            onFaceDetected();
+                            Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceFound", Toast.LENGTH_LONG).show();
+                        } else {
+                            if(type==RECOGNITION_START_BY_SPEECH) {
+                                if (m_misMatchCnt++ < 3)
+                                    recognize(type);
+                                else if(m_unlockWaiting!=null){
+                                    m_unlockWaiting.setMessage("TryAgain.");
+                                    m_unlockWaiting.getButton(AlertDialog.BUTTON_POSITIVE).setVisibility(View.INVISIBLE);
+                                    m_unlockWaiting.show();
+                                }
+                            }
+                            Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "TryAgain", Toast.LENGTH_LONG).show();
+                        }
+                        waiting.cancel();
+                    }
+                });
             }
         });
     }
@@ -230,7 +342,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         if (positiveButtonText != null && !positiveButtonText.isEmpty())
             builder.setPositiveButton(positiveButtonText, positiveButtonListener);
         if (negativeButtonText != null && !negativeButtonText.isEmpty())
-            builder.setPositiveButton(negativeButtonText, negativeButtonListener);
+            builder.setNegativeButton(negativeButtonText, negativeButtonListener);
         builder.setMessage(title);
         AlertDialog dialog = builder.create();
         dialog.setCancelable(false);
@@ -460,8 +572,11 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         }, SpeechRecognitionMode.ShortPhrase);
         builderSpeech.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialogInterface, int i) { builderSpeech.setMessage("Closing...");
-                speechThread.closeClient();
+            public void onClick(DialogInterface dialogInterface, int i) {
+                builderSpeech.setMessage("Closing...");
+                if(speechThread!=null) {
+                    speechThread.closeClient();
+                }
                 //now add the user using recognized speech input
                 if (m_finalSpeechResult != null && !m_finalSpeechResult.isEmpty()) {
                     PersonUtils.newUser(m_finalSpeechResult, "Speech");
@@ -491,7 +606,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 int result = msg.getData().getInt("faces");
-                if (result == 1) {
+                if (result == 1 && currentCapturedFaceId != null) {
                     UUID[] oldCapture = FaceUtils.FACES.getFacesIds();
                     waiting.setMessage("comparing...");
                     compare(currentCapturedFaceId[0], oldCapture[0]);
@@ -510,11 +625,11 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 if (isIdentical) {
                     waiting.setMessage("Authorized." + "Confidence: " + Double.toString(confidence));
                     Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-                    homeIntent.addCategory( Intent.CATEGORY_HOME );
+                    homeIntent.addCategory(Intent.CATEGORY_HOME);
                     startActivity(homeIntent);
-                }
-                else
+                } else
                     waiting.setMessage("UnAuthorized." + "Confidence: " + Double.toString(confidence));
+                waiting.cancel();
             }
         }).start();
     }
