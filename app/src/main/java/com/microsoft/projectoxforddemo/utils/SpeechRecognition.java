@@ -23,6 +23,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     public final static String HandlerKeyPartialResult="PartialResult";
     public final static String HandlerKeyEvent="Event";
     public final static String HandlerKeyException="Exception";
+    public final static String HandlerValueAudioReady="AudioService Started";
     private MicrophoneRecognitionClient m_micClient = null;
     private SpeechRecognitionMode m_recoMode;
     private ISpeechRecognitionServerEvents m_eventCallback;
@@ -183,7 +184,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
         if (m_eventCallback != null)
             m_eventCallback.onAudioEvent(b);
         if(b)
-            sendHandlerMessage(HandlerKeyEvent, "AudioService Start");
+            sendHandlerMessage(HandlerKeyEvent, HandlerValueAudioReady);
         else
             sendHandlerMessage(HandlerKeyEvent, "AudioService Close");
     }

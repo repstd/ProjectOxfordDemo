@@ -1,7 +1,6 @@
 package com.microsoft.projectoxforddemo.fragment;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -53,7 +52,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private final int RECOGNITION_START_BY_SPEECH=0;
     private final int RECOGNITION_START_BY_BUTTON=1;
     private final String TAG = "FaceDemoFragment";
-    ProgressDialog m_progressDialog;
     AlertDialog waiting;
     private Container m_container = null;
     private SurfaceView m_surf = null;
@@ -103,6 +101,15 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             m_cameraStatus = false;
         }
         closeUnlockThread();
+        m_misMatchCnt=0;
+        if(m_fabMenu.isExpanded())
+            m_fabMenu.collapse();
+        if(m_settingAlertDialog!=null&&m_settingAlertDialog.isShowing())
+            m_settingAlertDialog.cancel();
+        if(waiting!=null&&waiting.isShowing())
+            waiting.cancel();
+        if(m_unlockWaiting!=null&&m_unlockWaiting.isShowing())
+            m_unlockWaiting.cancel();
     }
 
     @Override
@@ -121,8 +128,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        m_progressDialog = new ProgressDialog(getActivity().getApplicationContext());
-        m_progressDialog.setTitle("FaceDemo");
     }
 
     void startUnlockThread()
@@ -140,7 +145,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                 closeUnlockThread();
             }
         });
-        m_unlockWaiting.setMessage("listening..");
+        m_unlockWaiting.setMessage("Connecting to the server...");
         m_lockScreenSpeechCli = new SpeechRecognition(this.getActivity(), null,
                 new Handler()
                 {
@@ -149,14 +154,16 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                         super.handleMessage(msg);
                         String result = msg.getData().getString(SpeechRecognition.HandlerKeyHighestConfidenceResult);
                         String partial = msg.getData().getString(SpeechRecognition.HandlerKeyPartialResult);
-                        String e=msg.getData().getString(SpeechRecognition.HandlerKeyEvent);
+                        String ke=msg.getData().getString(SpeechRecognition.HandlerKeyEvent);
                         String exp=msg.getData().getString(SpeechRecognition.HandlerKeyException);
                         if(exp!=null&&!exp.isEmpty()) {
                             m_unlockWaiting.setMessage("InternalError");
                             closeUnlockThread();
                         }
-                        if(e!=null&&!e.isEmpty()) {
-                            m_unlockWaiting.setMessage(e);
+                        if(ke!=null&&!ke.isEmpty()) {
+                            m_unlockWaiting.setMessage(ke);
+                            if(ke.equals(SpeechRecognition.HandlerValueAudioReady))
+                                m_unlockWaiting.setMessage("Now Speak...");
                         }
                         if (m_lockScreenSpeechCli != null && (result != null || partial != null))
                         {
