@@ -51,10 +51,15 @@ public class ImageUtils {
         }
         int camera_preview_right = canvas.getWidth() - margin_left;
         int camera_preview_bottom = canvas.getHeight() - margin_top;
-        drawable.setBounds(margin_left, margin_top, canvas.getWidth() - margin_left, canvas.getHeight() - margin_top);
+        drawable.setBounds(margin_left, margin_top, camera_preview_right, camera_preview_bottom);
         drawable.draw(canvas);
     }
-
+    public static void drawHomeImage(Canvas canvas,byte[] data,int margin_left,int margin_top) {
+        Bitmap bmp=getBitmap(data);
+        int camera_preview_right = canvas.getWidth() - margin_left;
+        int camera_preview_bottom = canvas.getHeight() - margin_top;
+        canvas.drawBitmap(bmp,null,new Rect(margin_left, margin_top, camera_preview_right, camera_preview_bottom),null);
+    }
     public static void drawContour(Canvas canvas) {
         int canvasWidth = canvas.getWidth();
         int canvasHeight = canvas.getHeight();
@@ -186,6 +191,7 @@ public class ImageUtils {
             m_lastCapture = resize(ImageUtils.rotateBitmap(original, 90));
         else
             m_lastCapture = resize(ImageUtils.rotateBitmap(original, -90));
+        save(m_lastCapture,"capture");
         return m_lastCapture;
     }
 

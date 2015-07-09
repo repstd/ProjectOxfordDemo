@@ -47,7 +47,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
         this.m_handler = handler;
         this.m_eventCallback = eventCallback;
         m_recoMode = mode;
-        m_waitSeconds = m_recoMode == SpeechRecognitionMode.ShortPhrase ? 50 : 500;
+        m_waitSeconds = m_recoMode == SpeechRecognitionMode.ShortPhrase ? 20 : 200;
         m_isActive = false;
     }
 
@@ -97,6 +97,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
             m_isActive = false;
             //boolean isReceivedResponse = m_micClient.waitForFinalResponse(m_waitSeconds);
             m_micClient.endMicAndRecognition();
+            m_micClient.dispose();
             sendHandlerMessage(HandlerKeyEvent, "SpeechClientClosed");
             if(m_recoMode==SpeechRecognitionMode.LongDictation) {
                 Log.d(TAG,"sending final result for LongDictation");

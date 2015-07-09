@@ -49,6 +49,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     public static final int FACE_VIEW_FACE = 1;
     public static final int FACE_VIEW_HOME_IMAGE = 2;
     public static final int FACE_VIEW_CONTOUR = 4;
+    public static final int FACE_VIEW_BUFFER = 4;
     private final int RECOGNITION_START_BY_SPEECH=0;
     private final int RECOGNITION_START_BY_BUTTON=1;
     private final String TAG = "FaceDemoFragment";
@@ -133,12 +134,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     void startUnlockThread()
     {
         m_unlockWaiting=newAlertDialog("Welcome",
-            "Okay", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-
-            }
-        },
+            "Okay",null,
             "Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -165,7 +161,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                             if(ke.equals(SpeechRecognition.HandlerValueAudioReady))
                                 m_unlockWaiting.setMessage("Now Speak...");
                         }
-                        if (m_lockScreenSpeechCli != null && (result != null || partial != null))
+                        if (m_lockScreenSpeechCli != null && (result != null))
                         {
                             if (!m_cameraStatus) {
                                 initCamera();
@@ -310,11 +306,13 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         Toast.makeText(getActivity().getApplicationContext(), "ReadyForFacesDetectionUsingMicrosoftAI", Toast.LENGTH_LONG).show();
         final AlertDialog waiting = newAlertDialog("requesting the server...", null, null, "cancel", null);
         waiting.show();
-        m_camera.takePicture(null, null, new Camera.PictureCallback() {
+        m_camera.takePicture(null, null, new Camera.PictureCallback()
+        {
             @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
-
-                FaceUtils.detectFace(data, new Handler() {
+            public void onPictureTaken(byte[] data, Camera camera)
+            {
+                //m_faceView.draw(FACE_VIEW_BUFFER,data);
+                FaceUtils.detectFace(data, new Handler()  {
                     @Override
                     public void handleMessage(Message msg) {
                         int result = -1;
@@ -333,7 +331,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                                     m_unlockWaiting.show();
                                 }
                             }
-                            Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "TryAgain", Toast.LENGTH_LONG).show();
+                            Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceNotDetected", Toast.LENGTH_LONG).show();
                         }
                         waiting.cancel();
                     }
@@ -408,6 +406,8 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         m_camera.setDisplayOrientation(90);
         ImageUtils.setCamera(m_camera_index);
         Camera.Parameters para = m_camera.getParameters();
+        para.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+        para.setExposureCompensation(para.getMaxExposureCompensation());
         if (m_camera.getParameters().getSupportedPictureFormats().contains(ImageFormat.JPEG)) {
             Log.d(TAG, "save the image format to " + ImageFormat.JPEG);
             para.setPictureFormat(ImageFormat.JPEG);
@@ -418,9 +418,9 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
 
     void startPreview() {
         try {
+            m_faceView.draw(FACE_VIEW_CLEAR);
             m_camera.setPreviewDisplay(m_surf.getHolder());
             m_camera.startPreview();
-            m_faceView.draw(FACE_VIEW_CLEAR);
         } catch (IOException e) {
 
         }
@@ -643,7 +643,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
 
     class FaceVisualizationView extends View {
         int m_src = FACE_VIEW_CONTOUR;
-
+        byte[] m_buf;
         public FaceVisualizationView(Context context) {
             super(context);
         }
@@ -669,12 +669,21 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                             (int) getActivity().getResources().getDimension(R.dimen.face_camera_preview_margin_left),
                             (int) getActivity().getResources().getDimension(R.dimen.face_camera_preview_margin_top));
                     break;
+                default:
+                    ImageUtils.drawHomeImage(canvas, m_buf,
+                            (int) getActivity().getResources().getDimension(R.dimen.face_camera_preview_margin_left),
+                            (int) getActivity().getResources().getDimension(R.dimen.face_camera_preview_margin_top));
+                    break;
             }
         }
 
         public void draw(int type) {
             m_src = type;
             invalidate();
+        }
+        public void draw(int type,byte[] data) {
+            m_src=type;
+            m_buf=data;
         }
     }
 }

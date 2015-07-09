@@ -56,8 +56,8 @@ public class MainActivity extends BaseActivity
     protected void onStop() {
         super.onStop();
         Intent serviceIntent = new Intent();
-        //serviceIntent.setClass(this, ScreenLocker.class);
-        //startService(serviceIntent);
+        serviceIntent.setClass(this, ScreenLocker.class);
+        startService(serviceIntent);
     }
 
     @Override
