@@ -179,9 +179,9 @@ public class SpeechDemoFragment extends BaseFragment implements ISpeechRecogniti
     @Override
     public void onAudioEvent(boolean b) {
         if (b)
-            updateTextView("AudioEvent: MicroPhone On");
+            updateTextView("AudioStart.TTS Service Ready.");
         else
-            updateTextView("AudioEvent: MicroPhone Off");
+            updateTextView("AudioEnded.TTS Service Closed");
     }
 
     @Override

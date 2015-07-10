@@ -24,6 +24,11 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     public final static String HandlerKeyEvent="Event";
     public final static String HandlerKeyException="Exception";
     public final static String HandlerValueAudioReady="AudioService Started";
+    public final static String HandlerValueAudioClose="AudioService Closed";
+    public final static String HandlerValueClientStarted="SpeechClientStarted";
+    public final static String HandlerValueClientFailToStarted="SpeechClientFailedToStart";
+    public final static String HandlerValueClientEnded="SpeechClientEnded";
+
     private MicrophoneRecognitionClient m_micClient = null;
     private SpeechRecognitionMode m_recoMode;
     private ISpeechRecognitionServerEvents m_eventCallback;
@@ -32,7 +37,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     private int m_waitSeconds;
     private boolean m_isActive;
     private int m_highestConfidence=-2;
-    private String m_hignestResult=null;
+    private String m_highestResult =null;
     public SpeechRecognition(Activity activity, ISpeechRecognitionServerEvents eventCallback, Handler handler) {
         this.m_activity = activity;
         this.m_handler = handler;
@@ -47,6 +52,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
         this.m_handler = handler;
         this.m_eventCallback = eventCallback;
         m_recoMode = mode;
+        //waiting time for final response
         m_waitSeconds = m_recoMode == SpeechRecognitionMode.ShortPhrase ? 20 : 200;
         m_isActive = false;
     }
@@ -72,11 +78,10 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
             sendHandlerMessage(HandlerKeyException, "Exception#"+e.getMessage());
         }
         if (m_micClient == null) {
-            sendHandlerMessage(HandlerKeyEvent, "SpeechClientFailedToStart");
+            sendHandlerMessage(HandlerKeyEvent,HandlerValueClientFailToStarted);
             return;
         }
-        m_isActive = true;
-        sendHandlerMessage(HandlerKeyEvent, "SpeechClientStart");
+        sendHandlerMessage(HandlerKeyEvent, HandlerValueClientStarted);
         Log.d(TAG, "SpeechClientInit");
     }
     synchronized public void closeClient()  {
@@ -92,16 +97,16 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     }
     public void closeClientRun()
     {
-        if (m_micClient != null)
+        if (m_micClient != null&&m_isActive)
         {
             m_isActive = false;
             //boolean isReceivedResponse = m_micClient.waitForFinalResponse(m_waitSeconds);
             m_micClient.endMicAndRecognition();
             m_micClient.dispose();
-            sendHandlerMessage(HandlerKeyEvent, "SpeechClientClosed");
+            sendHandlerMessage(HandlerKeyEvent, HandlerValueClientEnded);
             if(m_recoMode==SpeechRecognitionMode.LongDictation) {
                 Log.d(TAG,"sending final result for LongDictation");
-                sendHandlerMessage(HandlerKeyHighestConfidenceResult,m_hignestResult);
+                sendHandlerMessage(HandlerKeyHighestConfidenceResult, m_highestResult);
             }
             m_micClient = null;
             Log.d(TAG,"ClosingThreadEnded");
@@ -125,19 +130,19 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     {
         if (m_eventCallback != null)
             m_eventCallback.onFinalResponseReceived(recognitionResult);
-        boolean isFinalDicationMessage = isFinalDicationMessage(recognitionResult);
+        boolean isFinalDictationMessage = isFinalDictationMessage(recognitionResult);
         updateResult(recognitionResult);
-        if (isFinalDicationMessage && m_recoMode == SpeechRecognitionMode.LongDictation)
+        if (isFinalDictationMessage && m_recoMode == SpeechRecognitionMode.LongDictation)
             closeClient();
-        else if(!isFinalDicationMessage)
-            sendHandlerMessage(HandlerKeyHighestConfidenceResult,m_hignestResult);
+        else if(!isFinalDictationMessage)
+            sendHandlerMessage(HandlerKeyHighestConfidenceResult, m_highestResult);
     }
-    boolean isFinalDicationMessage(RecognitionResult recognitionResult)
+    boolean isFinalDictationMessage(RecognitionResult recognitionResult)
     {
-        boolean isFinalDicationMessage = m_recoMode == SpeechRecognitionMode.LongDictation &&
+        boolean isFinalDictationMessage = m_recoMode == SpeechRecognitionMode.LongDictation &&
                 (recognitionResult.RecognitionStatus == RecognitionStatus.EndOfDictation ||
                         recognitionResult.RecognitionStatus == RecognitionStatus.DictationEndSilenceTimeout);
-        return isFinalDicationMessage;
+        return isFinalDictationMessage;
     }
     String resultFilter(RecognitionResult recognitionResult)
     {
@@ -162,7 +167,7 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
             if (m_highestConfidence <= recognitionResult.Results[i].Confidence.ordinal())
             {
                 m_highestConfidence = recognitionResult.Results[i].Confidence.ordinal();
-                m_hignestResult=recognitionResult.Results[i].DisplayText;
+                m_highestResult =recognitionResult.Results[i].DisplayText;
             }
         }
     }
@@ -176,18 +181,25 @@ public class SpeechRecognition extends Thread implements ISpeechRecognitionServe
     public void onError(int i, String s) {
         if (m_eventCallback != null)
             m_eventCallback.onError(i, s);
-        sendHandlerMessage(HandlerKeyEvent, "Error"+" " +s);
+        sendHandlerMessage(HandlerKeyEvent, "Error" + " " + s);
         Log.d(TAG, "Error...");
     }
 
     @Override
-    public void onAudioEvent(boolean b) {
+    public void onAudioEvent(boolean b)
+    {
         if (m_eventCallback != null)
             m_eventCallback.onAudioEvent(b);
-        if(b)
+
+        Log.d(TAG,"Audio "+Boolean.toString(b));
+        if(b) {
+            m_isActive = true;
             sendHandlerMessage(HandlerKeyEvent, HandlerValueAudioReady);
-        else
-            sendHandlerMessage(HandlerKeyEvent, "AudioService Close");
+        }
+        else {
+            m_isActive=false;
+            sendHandlerMessage(HandlerKeyEvent, HandlerValueAudioClose);
+        }
     }
 
     synchronized void sendHandlerMessage(String key, String value) {

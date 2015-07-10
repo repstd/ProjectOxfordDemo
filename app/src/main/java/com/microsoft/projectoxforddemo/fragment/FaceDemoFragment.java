@@ -49,11 +49,10 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     public static final int FACE_VIEW_FACE = 1;
     public static final int FACE_VIEW_HOME_IMAGE = 2;
     public static final int FACE_VIEW_CONTOUR = 4;
-    public static final int FACE_VIEW_BUFFER = 4;
-    private final int RECOGNITION_START_BY_SPEECH=0;
-    private final int RECOGNITION_START_BY_BUTTON=1;
+    public static final int FACE_VIEW_BUFFER = 5;
+    private final int RECOGNITION_START_BY_SPEECH = 0;
+    private final int RECOGNITION_START_BY_BUTTON = 1;
     private final String TAG = "FaceDemoFragment";
-    AlertDialog waiting;
     private Container m_container = null;
     private SurfaceView m_surf = null;
     private Camera m_camera = null;
@@ -66,14 +65,17 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     private Rect m_cameraPreviewBound;
     private AlertDialog m_settingAlertDialog;
     private View m_settingAlertDialogView;
+
+
     private FaceServiceClient m_faceCli = null;
+    AlertDialog waiting;
     private String m_finalSpeechResult = null;
     //Index for the cameras in the devices.0 for back-camera and 1 for front-camera;
     private int m_camera_index = ImageUtils.CAMERA_FRONT;
     private boolean m_cameraStatus = false;
 
     private SpeechRecognition m_lockScreenSpeechCli = null;
-    private AlertDialog m_unlockWaiting=null;
+    private AlertDialog m_unlockWaiting = null;
 
     public void setContainer(Container c) {
         m_container = c;
@@ -102,14 +104,14 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             m_cameraStatus = false;
         }
         closeUnlockThread();
-        m_misMatchCnt=0;
-        if(m_fabMenu.isExpanded())
+        m_misMatchCnt = 0;
+        if (m_fabMenu.isExpanded())
             m_fabMenu.collapse();
-        if(m_settingAlertDialog!=null&&m_settingAlertDialog.isShowing())
+        if (m_settingAlertDialog != null && m_settingAlertDialog.isShowing())
             m_settingAlertDialog.cancel();
-        if(waiting!=null&&waiting.isShowing())
+        if (waiting != null && waiting.isShowing())
             waiting.cancel();
-        if(m_unlockWaiting!=null&&m_unlockWaiting.isShowing())
+        if (m_unlockWaiting != null && m_unlockWaiting.isShowing())
             m_unlockWaiting.cancel();
     }
 
@@ -118,7 +120,8 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         super.onResume();
         Log.d(TAG, "onResume");
         m_faceView.draw(FACE_VIEW_HOME_IMAGE);
-        startUnlockThread();
+        if (m_lockScreenSpeechCli == null || !m_lockScreenSpeechCli.isActive())
+            startUnlockThread();
     }
 
     @Override
@@ -131,53 +134,45 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         super.onCreate(savedInstanceState);
     }
 
-    void startUnlockThread()
-    {
-        m_unlockWaiting=newAlertDialog("Welcome",
-            "Okay",null,
-            "Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                closeUnlockThread();
-            }
-        });
+    void startUnlockThread() {
+        m_unlockWaiting = newAlertDialog("Welcome",
+                null, null,
+                "Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        closeUnlockThread();
+                    }
+                });
         m_unlockWaiting.setMessage("Connecting to the server...");
         m_lockScreenSpeechCli = new SpeechRecognition(this.getActivity(), null,
-                new Handler()
-                {
+                new Handler() {
                     @Override
                     public void handleMessage(Message msg) {
                         super.handleMessage(msg);
                         String result = msg.getData().getString(SpeechRecognition.HandlerKeyHighestConfidenceResult);
                         String partial = msg.getData().getString(SpeechRecognition.HandlerKeyPartialResult);
-                        String ke=msg.getData().getString(SpeechRecognition.HandlerKeyEvent);
-                        String exp=msg.getData().getString(SpeechRecognition.HandlerKeyException);
-                        if(exp!=null&&!exp.isEmpty()) {
+                        String ke = msg.getData().getString(SpeechRecognition.HandlerKeyEvent);
+                        String exp = msg.getData().getString(SpeechRecognition.HandlerKeyException);
+                        if (exp != null && !exp.isEmpty()) {
                             m_unlockWaiting.setMessage("InternalError");
                             closeUnlockThread();
                         }
-                        if(ke!=null&&!ke.isEmpty()) {
+                        if (ke != null && !ke.isEmpty()) {
                             m_unlockWaiting.setMessage(ke);
-                            if(ke.equals(SpeechRecognition.HandlerValueAudioReady))
+                            if (ke.equals(SpeechRecognition.HandlerValueAudioReady))
                                 m_unlockWaiting.setMessage("Now Speak...");
+                            else if (ke.equals(SpeechRecognition.HandlerValueAudioClose))
+                                m_unlockWaiting.setMessage("ServiceClosed,TryAgain");
                         }
-                        if (m_lockScreenSpeechCli != null && (result != null))
-                        {
-                            if (!m_cameraStatus) {
-                                initCamera();
-                                startPreview();
-                                m_cameraStatus = true;
-                            }
-                            if(m_camera==null)
-                                return;
+                        if (m_lockScreenSpeechCli != null && (result != null)) {
+                            m_unlockWaiting.setMessage("RecognizedGreeting :" + result);
                             m_lockScreenSpeechCli.closeClient();
                             m_unlockWaiting.cancel();
-                            m_lockScreenSpeechCli=null;
-                            m_unlockWaiting.cancel();
+                            m_lockScreenSpeechCli = null;
                             recognize(RECOGNITION_START_BY_SPEECH);
                         }
                     }
-                },SpeechRecognitionMode.LongDictation);
+                }, SpeechRecognitionMode.LongDictation);
         m_unlockWaiting.show();
         m_lockScreenSpeechCli.start();
     }
@@ -294,50 +289,87 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             @Override
             public void onClick(View view) {
                 PersonUtils.removeData();
+                Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "UserInformationDeleted", Toast.LENGTH_LONG).show();
                 m_fabMenu.collapse();
             }
         });
     }
-    private int m_misMatchCnt=0;
-    void recognize(final int type)
-    {
+
+    private int m_misMatchCnt = 0;
+
+    void recognize(final int type) {
         if (!OxfordRecognitionManager.instance().isNetworkAvailable(getActivity()))
             return;
+        if (!m_cameraStatus) {
+            initCamera();
+            startPreview();
+            m_cameraStatus = true;
+        } else
+            restartCamera();
         Toast.makeText(getActivity().getApplicationContext(), "ReadyForFacesDetectionUsingMicrosoftAI", Toast.LENGTH_LONG).show();
-        final AlertDialog waiting = newAlertDialog("requesting the server...", null, null, "cancel", null);
-        waiting.show();
-        m_camera.takePicture(null, null, new Camera.PictureCallback()
-        {
+        final AlertDialog waiting = newAlertDialog("FaceRecognition", null, null, "cancel", null);
+        //Wait for some seconds
+        waiting.setMessage("Preparing...");
+        final Handler hThreadSleep = new Handler() {
             @Override
-            public void onPictureTaken(byte[] data, Camera camera)
-            {
-                //m_faceView.draw(FACE_VIEW_BUFFER,data);
-                FaceUtils.detectFace(data, new Handler()  {
-                    @Override
-                    public void handleMessage(Message msg) {
-                        int result = -1;
-                        result = msg.getData().getInt("faces");
-                        Log.d(TAG, "BackgroundFaceRecognitionTaskEnded.Result: " + Integer.toString(result));
-                        if (result == 1) {
-                            onFaceDetected();
-                            Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceFound", Toast.LENGTH_LONG).show();
-                        } else {
-                            if(type==RECOGNITION_START_BY_SPEECH) {
-                                if (m_misMatchCnt++ < 3)
-                                    recognize(type);
-                                else if(m_unlockWaiting!=null){
-                                    m_unlockWaiting.setMessage("TryAgain.");
-                                    m_unlockWaiting.getButton(AlertDialog.BUTTON_POSITIVE).setVisibility(View.INVISIBLE);
-                                    m_unlockWaiting.show();
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                int time = msg.getData().getInt("time");
+                waiting.setMessage(Integer.toString(time));
+                if (time == 0) {
+                    waiting.setMessage("connecting the server...");
+                    m_camera.takePicture(null, null, new Camera.PictureCallback() {
+                        @Override
+                        public void onPictureTaken(byte[] data, Camera camera) {
+                            //m_faceView.draw(FACE_VIEW_BUFFER,data);
+                            FaceUtils.detectFace(data, new Handler() {
+                                @Override
+                                public void handleMessage(Message msg) {
+                                    int result = -1;
+                                    result = msg.getData().getInt("faces");
+                                    Log.d(TAG, "BackgroundFaceRecognitionTaskEnded.Result: " + Integer.toString(result));
+                                    if (result == 1) {
+                                        onFaceDetected();
+                                        Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceFound", Toast.LENGTH_LONG).show();
+                                    } else {
+                                        if (type == RECOGNITION_START_BY_SPEECH) {
+                                            if (m_misMatchCnt++ < 3)
+                                                recognize(type);
+                                            else if (m_unlockWaiting != null) {
+                                                m_unlockWaiting.setMessage("TryAgain.");
+                                                m_unlockWaiting.getButton(AlertDialog.BUTTON_POSITIVE).setVisibility(View.INVISIBLE);
+                                                m_unlockWaiting.show();
+                                            }
+                                        }
+                                        Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceNotDetected", Toast.LENGTH_LONG).show();
+                                    }
+                                    waiting.cancel();
                                 }
-                            }
-                            Toast.makeText(FaceDemoFragment.this.getActivity().getApplicationContext(), "FaceNotDetected", Toast.LENGTH_LONG).show();
+                            });
                         }
-                        waiting.cancel();
-                    }
-                });
+                    });
+                }
             }
-        });
+        };
+        waiting.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //Wait 3 seconds before taking photos;
+                for (int i = 3; i >= 0; i--) {
+                    try {
+                        Message msg = new Message();
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("time", i);
+                        msg.setData(bundle);
+                        Thread.sleep(1000);
+                        hThreadSleep.sendMessage(msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     public AlertDialog newAlertDialog(String title,
@@ -391,8 +423,8 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         Camera.Parameters para = m_camera.getParameters();
         List<Integer> supportedPreviewFormats = para.getSupportedPreviewFormats();
         logList("Supported Preview Format:", supportedPreviewFormats);
-        List<Integer> supportedPicutreFormats = para.getSupportedPictureFormats();
-        logList("Supported Picture Format:", supportedPicutreFormats);
+        List<Integer> supportedPicFormats = para.getSupportedPictureFormats();
+        logList("Supported Picture Format:", supportedPicFormats);
     }
 
     void logList(String desc, List<Integer> arr) {
@@ -475,19 +507,19 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
         builder.setTitle("FaceAttributes");
         //show name
         EditText nameEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_name);
-        nameEditText.setText(PersonUtils.getUserName());
+        nameEditText.setText("PhoneOwner: " + PersonUtils.getUserName());
 
         //show age
         EditText ageEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_age);
-        ageEditText.setText(Double.toString(attr.age));
+        ageEditText.setText("Age: " + Double.toString(attr.age));
         //show Gender;
         EditText genderEditText = (EditText) layout.findViewById(R.id.fragment_face_demo_face_attr_gender);
         if (attr.gender.equals(GenderEnum.male))
-            genderEditText.setText("Male");
+            genderEditText.setText("Gender: Male");
         else if (attr.gender.equals(GenderEnum.female))
-            genderEditText.setText("Female");
+            genderEditText.setText("Gender: Female");
         else
-            genderEditText.setText("Unknown");
+            genderEditText.setText("Gender: Unknown");
         final AlertDialog dialog = builder.create();
         builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
             @Override
@@ -520,11 +552,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                     promptForInfoByText();
             }
         });
-        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-            }
-        });
+        builder.setNegativeButton("No", null);
         builder.setCancelable(true);
         builder.show();
     }
@@ -581,7 +609,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 builderSpeech.setMessage("Closing...");
-                if(speechThread!=null) {
+                if (speechThread != null) {
                     speechThread.closeClient();
                 }
                 //now add the user using recognized speech input
@@ -613,11 +641,12 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 int result = msg.getData().getInt("faces");
-                if (result == 1 && currentCapturedFaceId != null) {
+                if (result == 1) {
                     UUID[] oldCapture = FaceUtils.FACES.getFacesIds();
                     waiting.setMessage("comparing...");
                     compare(currentCapturedFaceId[0], oldCapture[0]);
                 }
+
             }
         });
     }
@@ -636,7 +665,6 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
                     startActivity(homeIntent);
                 } else
                     waiting.setMessage("UnAuthorized." + "Confidence: " + Double.toString(confidence));
-                waiting.cancel();
             }
         }).start();
     }
@@ -644,6 +672,7 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
     class FaceVisualizationView extends View {
         int m_src = FACE_VIEW_CONTOUR;
         byte[] m_buf;
+
         public FaceVisualizationView(Context context) {
             super(context);
         }
@@ -681,9 +710,10 @@ public class FaceDemoFragment extends BaseFragment implements SubFragment {
             m_src = type;
             invalidate();
         }
-        public void draw(int type,byte[] data) {
-            m_src=type;
-            m_buf=data;
+
+        public void draw(int type, byte[] data) {
+            m_src = type;
+            m_buf = data;
         }
     }
 }
