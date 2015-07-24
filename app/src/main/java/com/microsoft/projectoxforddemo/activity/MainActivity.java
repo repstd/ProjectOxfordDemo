@@ -12,7 +12,10 @@ import android.view.View;
 import android.widget.PopupMenu;
 
 import com.microsoft.projectoxforddemo.R;
+import com.microsoft.projectoxforddemo.utils.ISpeechClient.SpeechClient;
 import com.microsoft.projectoxforddemo.utils.OxfordRecognitionManager;
+
+import org.apache.http.HttpResponse;
 
 
 /**
@@ -212,6 +215,29 @@ public class MainActivity extends BaseActivity
                 m_editor.commit();
             }
         });
+        testSpeech();
+    }
+    void testSpeech() {
+        final String audioName="Zira(HQ)003.wav";
+        SpeechClient.RecognitionParams rp=new SpeechClient.RecognitionParams();
+        rp.lang="en-us";
+        rp.recognitionMode="";
+        rp.codec="audio/wav";
+        rp.samplerate=16000;
+        rp.sourcerate=8000;
+        rp.trustsourcerate=false;
+        final SpeechClient client=new SpeechClient(getApplicationContext(),rp,"");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                HttpResponse response=client.recognize(audioName);
+                if(response==null)
+                    Log.d(MainActivity.this.getClass().toString(),"ErrorRequesting");
+                else {
+                    Log.d("SpeechClient", Integer.toString(response.getStatusLine().getStatusCode()));
+                }
+            }
+        }).start();
     }
 
 }
